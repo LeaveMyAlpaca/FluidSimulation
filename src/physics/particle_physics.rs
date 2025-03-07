@@ -65,7 +65,7 @@ pub fn handle_particles_physics(
         };
         if DEBUG_SHOW_PARTICLE_PRESSURE {
             let pos = transform.translation.xy();
-            println!("pressure :{}", pressure_forece);
+            // println!("pressure :{}", pressure_forece);
             gizmos.arrow_2d(pos, pos + pressure_forece, CORAL);
         }
 
