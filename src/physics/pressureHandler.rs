@@ -1,7 +1,6 @@
-use std::f32::consts::PI;
-
-use crate::PARTICLES_TO_SPAWN;
+use crate::particlesSpawning;
 use bevy::{math::Vec2, prelude::*};
+use std::f32::consts::PI;
 
 // can't use SMOOTHING_DISTANCE.powi(4) so just multiply 4 times
 const SMOOTHING_KERNEL_DERIVATIVE_SCALE: f32 = 12f32
@@ -26,9 +25,9 @@ fn smoothing_kernel(distance: f32) -> f32 {
 }
 
 pub fn calculate_density_for_every_particle(particles_pos: &Vec<Vec2>) -> Vec<f32> {
-    let mut output = Vec::with_capacity(PARTICLES_TO_SPAWN as usize);
+    let mut output = Vec::with_capacity(particlesSpawning::PARTICLES_TO_SPAWN as usize);
 
-    for i in 0..PARTICLES_TO_SPAWN as usize {
+    for i in 0..particlesSpawning::PARTICLES_TO_SPAWN as usize {
         output.push(sample_density(i, particles_pos));
     }
     output
@@ -41,7 +40,7 @@ pub fn calculate_pressure_force(
     let sample_point = particles_pos[sample_particel_index];
     let mut pressure: Vec2 = Vec2::ZERO;
 
-    for i in 0..PARTICLES_TO_SPAWN as usize {
+    for i in 0..particlesSpawning::PARTICLES_TO_SPAWN as usize {
         let pos = particles_pos[i];
         if i == sample_particel_index || sample_point == pos {
             continue;

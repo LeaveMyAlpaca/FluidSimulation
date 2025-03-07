@@ -1,8 +1,8 @@
 use std::usize;
 
 use crate::{
-    PARTICLE_RESOULTION, PARTICLES_TO_SPAWN,
     collisions::resolve_colisions,
+    particlesSpawning,
     pressureHandler::{self, calculate_pressure_force},
 };
 use bevy::{color::palettes::css::CORAL, gizmos, math::*, prelude::*};
@@ -26,7 +26,7 @@ pub fn handle_particles_physics(
     mut gizmos: Gizmos,
 ) {
     //
-    let mut particle_points = Vec::with_capacity(PARTICLES_TO_SPAWN as usize);
+    let mut particle_points = Vec::with_capacity(particlesSpawning::PARTICLES_TO_SPAWN as usize);
     for (transform, _) in &particles {
         particle_points.push(transform.translation.xy());
     }
@@ -41,7 +41,8 @@ pub fn handle_particles_physics(
                 "density:{} {}",
                 densities[debug_particle_index as usize], debug_particle_index
             );
-            let scale = crate::PARTICLE_RAY * densities[debug_particle_index as usize] * 200f32;
+            let scale =
+                particlesSpawning::PARTICLE_RAY * densities[debug_particle_index as usize] * 200f32;
             transform.scale = vec3(scale, scale, 1f32);
         }
         if DEBUG_SHOW_DISTANCE_CHECK {
@@ -54,7 +55,7 @@ pub fn handle_particles_physics(
                 points += 10f32 / point.distance_squared(pos);
             }
             println!("points: {}", points);
-            let scale = crate::PARTICLE_RAY * points * 5f32;
+            let scale = particlesSpawning::PARTICLE_RAY * points * 5f32;
             transform.scale = vec3(scale, scale, 1f32);
         }
 
@@ -109,6 +110,6 @@ impl Particle {
         }
     }
     fn calc_area(ray: f32) -> f32 {
-        core::f32::consts::PI * ray.squared() * PARTICLE_RESOULTION
+        core::f32::consts::PI * ray.squared() * particlesSpawning::PARTICLE_RESOULTION
     }
 }
