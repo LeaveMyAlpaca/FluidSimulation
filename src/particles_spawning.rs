@@ -1,4 +1,4 @@
-use crate::{boundingBox::BOX_BOUNDS_SIZE, particlePhysics};
+use crate::{bounding_box::BOX_BOUNDS_SIZE, particle_physics};
 use bevy::{math::vec2, prelude::*};
 use rand::{Rng, rngs::ThreadRng};
 
@@ -34,7 +34,7 @@ fn spawn_particle(
         scale: Vec3::new(ray, ray, ray),
         ..default()
     };
-    let particle = particlePhysics::Particle::new(mass, vec2(1f32, 0f32), PARTICLE_RAY);
+    let particle = particle_physics::Particle::new(mass, vec2(1f32, 0f32), PARTICLE_RAY);
 
     commands.spawn((particle, transform, sprite));
 }

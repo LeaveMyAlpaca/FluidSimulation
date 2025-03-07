@@ -1,31 +1,29 @@
-mod boundingBox;
+mod bounding_box;
 #[path = "physics/collisions.rs"]
 mod collisions;
-#[path = "physics/particlePhysics.rs"]
-mod particlePhysics;
-mod particlesSpawning;
-#[path = "physics/pressureHandler.rs"]
-mod pressureHandler;
-mod uiHandler;
+#[path = "physics/particle_physics.rs"]
+mod particle_physics;
+mod particles_spawning;
+#[path = "physics/pressure_handler.rs"]
+mod pressure_handler;
+mod ui_handler;
 
-use bevy::{math::vec2, prelude::*};
-use boundingBox::BOX_BOUNDS_SIZE;
-use rand::{Rng, rngs::ThreadRng};
+use bevy::prelude::*;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_systems(Startup, (setup, boundingBox::spawn_bounding_box))
+        .add_systems(Startup, (setup, bounding_box::spawn_bounding_box))
         .add_systems(
             Update,
             (
-                particlePhysics::handle_particles_physics,
-                uiHandler::update_ui,
+                particle_physics::handle_particles_physics,
+                ui_handler::update_ui,
             ),
         )
         .run();
 }
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d);
-    uiHandler::setup_ui(&mut commands);
-    particlesSpawning::handle_spawning_particles(&mut commands, &asset_server);
+    ui_handler::setup_ui(&mut commands);
+    particles_spawning::handle_spawning_particles(&mut commands, &asset_server);
 }

@@ -1,9 +1,7 @@
-use std::usize;
-
 use crate::{
     collisions::resolve_colisions,
-    particlesSpawning,
-    pressureHandler::{self, calculate_pressure_force},
+    particles_spawning,
+    pressure_handler::{self, calculate_pressure_force},
 };
 use bevy::{color::palettes::css::CORAL, gizmos, math::*, prelude::*};
 
@@ -26,11 +24,11 @@ pub fn handle_particles_physics(
     mut gizmos: Gizmos,
 ) {
     //
-    let mut particle_points = Vec::with_capacity(particlesSpawning::PARTICLES_TO_SPAWN as usize);
+    let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_TO_SPAWN as usize);
     for (transform, _) in &particles {
         particle_points.push(transform.translation.xy());
     }
-    let densities = &pressureHandler::calculate_density_for_every_particle(&particle_points);
+    let densities = &pressure_handler::calculate_density_for_every_particle(&particle_points);
     let delta = time.delta().as_secs_f32() * TIME_SCALE;
 
     let mut debug_particle_index: i32 = -1;
@@ -41,8 +39,9 @@ pub fn handle_particles_physics(
                 "density:{} {}",
                 densities[debug_particle_index as usize], debug_particle_index
             );
-            let scale =
-                particlesSpawning::PARTICLE_RAY * densities[debug_particle_index as usize] * 200f32;
+            let scale = particles_spawning::PARTICLE_RAY
+                * densities[debug_particle_index as usize]
+                * 200f32;
             transform.scale = vec3(scale, scale, 1f32);
         }
         if DEBUG_SHOW_DISTANCE_CHECK {
@@ -55,7 +54,7 @@ pub fn handle_particles_physics(
                 points += 10f32 / point.distance_squared(pos);
             }
             println!("points: {}", points);
-            let scale = particlesSpawning::PARTICLE_RAY * points * 5f32;
+            let scale = particles_spawning::PARTICLE_RAY * points * 5f32;
             transform.scale = vec3(scale, scale, 1f32);
         }
 
@@ -110,6 +109,6 @@ impl Particle {
         }
     }
     fn calc_area(ray: f32) -> f32 {
-        core::f32::consts::PI * ray.squared() * particlesSpawning::PARTICLE_RESOULTION
+        core::f32::consts::PI * ray.squared() * particles_spawning::PARTICLE_RESOULTION
     }
 }
