@@ -1,12 +1,12 @@
 use bevy::{math::*, prelude::*, sprite::Sprite};
 
-pub const BOX_BOUNDS_SIZE: Vec2 = Vec2::new(1000f32, 1000f32);
+pub const BOX_BOUNDS_SIZE_PIXELS: Vec2 = Vec2::new(1800f32, 900f32);
 const BOX_SPRITE_PATH: &str = "sprites/box.png";
 pub const BOX_SPRITE_RESOLUTION: Vec2 = Vec2::new(50f32, 50f32);
 
 pub fn spawn_bounding_box(mut commands: Commands, asset_server: Res<AssetServer>) {
     let sprite = Sprite::from_image(asset_server.load(BOX_SPRITE_PATH));
-    let scale = BOX_BOUNDS_SIZE / BOX_SPRITE_RESOLUTION;
+    let scale = BOX_BOUNDS_SIZE_PIXELS / BOX_SPRITE_RESOLUTION;
 
     // Z works like layer so -1000 to make it stay in the background
     let transform = Transform {

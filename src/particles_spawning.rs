@@ -1,4 +1,4 @@
-use crate::{bounding_box::BOX_BOUNDS_SIZE, particle_physics};
+use crate::{bounding_box::BOX_BOUNDS_SIZE_PIXELS, particle_physics};
 use bevy::{math::vec2, prelude::*};
 use rand::{Rng, rngs::ThreadRng};
 
@@ -39,7 +39,7 @@ fn spawn_particle(
     commands.spawn((particle, transform, sprite));
 }
 
-pub const PARTICLES_TO_SPAWN: u32 = 1000;
+pub const PARTICLES_TO_SPAWN: u32 = 10000;
 const PARTICLES_LAYERS: u32 = 40;
 const PARTICLES_SPACING: f32 = 20f32;
 
@@ -54,7 +54,7 @@ fn get_particle_spawn_position(index: f32, rng: &mut ThreadRng) -> Vec2 {
     get_random_spawn_point(rng)
 }
 fn get_random_spawn_point(rng: &mut ThreadRng) -> Vec2 {
-    let real_box_size = BOX_BOUNDS_SIZE / 2f32;
+    let real_box_size = BOX_BOUNDS_SIZE_PIXELS / 2f32;
 
     let y = rng.random_range(-(real_box_size.y) as i32..(real_box_size.y) as i32);
     let x = rng.random_range(-(real_box_size.x) as i32..(real_box_size.x) as i32);

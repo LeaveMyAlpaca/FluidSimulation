@@ -1,4 +1,7 @@
-use crate::particles_spawning;
+use crate::{
+    particle_grid::{self, pixel_pos_to_gird_pos},
+    particles_spawning,
+};
 use bevy::{math::Vec2, prelude::*};
 use std::f32::consts::PI;
 
@@ -24,34 +27,50 @@ fn smoothing_kernel(distance: f32) -> f32 {
     (SMOOTHING_DISTANCE - distance) * (SMOOTHING_DISTANCE - distance) / SMOOTHING_KERNEL_VOLUME
 }
 
-pub fn calculate_density_for_every_particle(particles_pos: &Vec<Vec2>) -> Vec<f32> {
+pub fn calculate_density_for_every_particle(
+    particles_gird: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
+    particles_pos: &Vec<Vec2>,
+) -> Vec<f32> {
     let mut output = Vec::with_capacity(particles_spawning::PARTICLES_TO_SPAWN as usize);
 
     for i in 0..particles_spawning::PARTICLES_TO_SPAWN as usize {
-        output.push(sample_density(i, particles_pos));
+        output.push(sample_density(
+            &particles_pos[i],
+            particles_gird,
+            particles_pos,
+        ));
     }
     output
 }
 pub fn calculate_pressure_force(
     sample_particel_index: usize,
     particles_pos: &Vec<Vec2>,
+    particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
     densities: &Vec<f32>,
 ) -> Vec2 {
     let sample_point = particles_pos[sample_particel_index];
     let mut pressure: Vec2 = Vec2::ZERO;
+    let connected_cells =
+        particle_grid::get_connected_cells_indexes(&pixel_pos_to_gird_pos(&sample_point));
 
-    for i in 0..particles_spawning::PARTICLES_TO_SPAWN as usize {
-        let pos = particles_pos[i];
-        if i == sample_particel_index || sample_point == pos {
-            continue;
+    for cell in connected_cells {
+        for particle_index_ref in &particle_grid[cell] {
+            let particle_index = particle_index_ref.to_owned();
+            let pos = particles_pos[particle_index];
+            if particle_index == sample_particel_index || sample_point == pos {
+                continue;
+            }
+
+            let dist = pos.distance(sample_point);
+            let dir = (pos - sample_point) / dist;
+            let slope = smoothing_kernel_derivative(dist);
+            let shared_pressure = calculate_shared_pressure(
+                densities[particle_index],
+                densities[sample_particel_index],
+            );
+            pressure -=
+                shared_pressure * dir * slope * INFLUENCE_MODIFIER / densities[particle_index];
         }
-
-        let dist = pos.distance(sample_point);
-        let dir = (pos - sample_point) / dist;
-        let slope = smoothing_kernel_derivative(dist);
-        let shared_pressure =
-            calculate_shared_pressure(densities[i], densities[sample_particel_index]);
-        pressure -= shared_pressure * dir * slope * INFLUENCE_MODIFIER / densities[i];
     }
     pressure
 }
@@ -71,14 +90,21 @@ fn get_influence(a: &Vec2, b: &Vec2) -> f32 {
     smoothing_kernel(a.distance(b.xy()))
 }
 
-const SMOOTHING_DISTANCE: f32 = 100f32;
+pub const SMOOTHING_DISTANCE: f32 = 100f32;
 const INFLUENCE_MODIFIER: f32 = 10f32;
-pub fn sample_density(sample_particle_index: usize, particles_pos: &Vec<Vec2>) -> f32 {
+pub fn sample_density(
+    sample_particle_pos: &Vec2,
+    particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
+    particles: &Vec<Vec2>,
+) -> f32 {
     let mut density: f32 = 0f32;
-    let sample_point = particles_pos[sample_particle_index];
-    for pos in particles_pos {
-        let influence = get_influence(&sample_point, pos);
-        density += influence * INFLUENCE_MODIFIER;
+    let connected_cells =
+        particle_grid::get_connected_cells_indexes(&pixel_pos_to_gird_pos(&sample_particle_pos));
+    for cell in connected_cells {
+        for particle_index in &particle_grid[cell] {
+            let influence = get_influence(&sample_particle_pos, &particles[particle_index.clone()]);
+            density += influence * INFLUENCE_MODIFIER;
+        }
     }
 
     density

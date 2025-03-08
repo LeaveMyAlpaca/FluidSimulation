@@ -1,21 +1,21 @@
 use crate::{
     collisions::resolve_colisions,
-    particles_spawning,
+    particle_grid, particles_spawning,
     pressure_handler::{self, calculate_pressure_force},
 };
-use bevy::{color::palettes::css::CORAL, gizmos, math::*, prelude::*};
+use bevy::{color::palettes::css::CORAL, math::*, prelude::*};
 
 // physics settings
 const GRAVITY: Vec2 = Vec2::new(0f32, 0f32);
 const TIME_SCALE: f32 = 2f32;
 const AIR_DENSITY: f32 = 1f32;
 const PARTICLE_DRAG_COEFICIENT: f32 = 0.001f32;
-const PRESSURE_FORCE_MODIFIER: f32 = 2f32;
+const PRESSURE_FORCE_MODIFIER: f32 = 5f32;
 
 const DEBUG_USE_PRESSURE: bool = true;
 const DEBUG_RUN_PARTICLE_PHYSICS: bool = true;
 const DEBUG_SHOW_PARTICLE_DENSITY: bool = false;
-const DEBUG_SHOW_PARTICLE_PRESSURE: bool = true;
+const DEBUG_SHOW_PARTICLE_PRESSURE: bool = false;
 const DEBUG_SHOW_DISTANCE_CHECK: bool = false;
 
 pub fn handle_particles_physics(
@@ -28,20 +28,21 @@ pub fn handle_particles_physics(
     for (transform, _) in &particles {
         particle_points.push(transform.translation.xy());
     }
-    let densities = &pressure_handler::calculate_density_for_every_particle(&particle_points);
+    let grid = particle_grid::split_particles_into_grid(&particle_points);
+    let densities =
+        &pressure_handler::calculate_density_for_every_particle(&grid, &particle_points);
     let delta = time.delta().as_secs_f32() * TIME_SCALE;
 
-    let mut debug_particle_index: i32 = -1;
+    let mut particle_index: i32 = -1;
     for (mut transform, mut particle) in &mut particles {
-        debug_particle_index += 1;
+        particle_index += 1;
         if DEBUG_SHOW_PARTICLE_DENSITY {
             println!(
                 "density:{} {}",
-                densities[debug_particle_index as usize], debug_particle_index
+                densities[particle_index as usize], particle_index
             );
-            let scale = particles_spawning::PARTICLE_RAY
-                * densities[debug_particle_index as usize]
-                * 200f32;
+            let scale =
+                particles_spawning::PARTICLE_RAY * densities[particle_index as usize] * 200f32;
             transform.scale = vec3(scale, scale, 1f32);
         }
         if DEBUG_SHOW_DISTANCE_CHECK {
@@ -59,7 +60,7 @@ pub fn handle_particles_physics(
         }
 
         let pressure_forece: Vec2 = if DEBUG_USE_PRESSURE {
-            -calculate_pressure_force(debug_particle_index as usize, &particle_points, densities)
+            -calculate_pressure_force(particle_index as usize, &particle_points, &grid, densities)
         } else {
             Vec2::ZERO
         };
