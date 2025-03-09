@@ -15,8 +15,9 @@ pub fn handle_spawning_particles(commands: &mut Commands, asset_server: &Res<Ass
             STANDARD_PARTICLE_MASS,
             PARTICLE_RAY,
             get_particle_spawn_position(i as f32, &mut rng),
+            i as usize,
             commands,
-            &asset_server,
+            asset_server,
         );
     }
 }
@@ -24,6 +25,7 @@ fn spawn_particle(
     mass: f32,
     ray: f32,
     pos: Vec2,
+    index: usize,
     commands: &mut Commands,
     asset_server: &Res<AssetServer>,
 ) {
@@ -34,12 +36,12 @@ fn spawn_particle(
         scale: Vec3::new(ray, ray, ray),
         ..default()
     };
-    let particle = particle_physics::Particle::new(mass, vec2(1f32, 0f32), PARTICLE_RAY);
+    let particle = particle_physics::Particle::new(mass, vec2(1f32, 0f32), PARTICLE_RAY, index);
 
     commands.spawn((particle, transform, sprite));
 }
 
-pub const PARTICLES_TO_SPAWN: u32 = 10000;
+pub const PARTICLES_TO_SPAWN: u32 = 30000;
 const PARTICLES_LAYERS: u32 = 40;
 const PARTICLES_SPACING: f32 = 20f32;
 
