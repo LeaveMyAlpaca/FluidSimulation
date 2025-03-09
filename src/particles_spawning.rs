@@ -41,7 +41,7 @@ fn spawn_particle(
     commands.spawn((particle, transform, sprite));
 }
 
-pub const PARTICLES_TO_SPAWN: u32 = 30000;
+pub const PARTICLES_TO_SPAWN: u32 = 10000;
 const PARTICLES_LAYERS: u32 = 40;
 const PARTICLES_SPACING: f32 = 20f32;
 

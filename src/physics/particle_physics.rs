@@ -3,7 +3,7 @@ use crate::{
     particle_grid, particles_spawning,
     pressure_handler::{self, calculate_pressure_force},
 };
-use bevy::{color::palettes::css::CORAL, math::*, prelude::*};
+use bevy::{math::*, prelude::*};
 
 // physics settings
 const GRAVITY: Vec2 = Vec2::new(0f32, 0f32);
@@ -22,21 +22,45 @@ pub fn handle_particles_physics(
     mut particles: Query<(&mut Transform, &mut Particle), With<Particle>>,
     time: Res<Time>,
 ) {
-    //
+    // array of vectors for particles that can be indexed by particle index to aces connected cells
+    // so i don't have to calculate them multiple times
+    let mut connected_cells: [Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize] =
+    // could think about using Vec::with_capacity
+        [const { Vec::new() }; particles_spawning::PARTICLES_TO_SPAWN as usize];
+
+    // TODO: test if parallel could work
+    let mut i = 0;
+    particles.iter().for_each(|(transform, _)| {
+        connected_cells[i] = particle_grid::get_connected_cells_indexes(
+            &particle_grid::pixel_pos_to_gird_pos(&transform.translation.xy()),
+        );
+        // println!("connected_cells[i] {:?}", connected_cells[i]);
+        i += 1;
+    });
     let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_TO_SPAWN as usize);
     for (transform, _) in &particles {
         particle_points.push(transform.translation.xy());
     }
     let grid = particle_grid::split_particles_into_grid(&particle_points);
-    let densities =
-        &pressure_handler::calculate_density_for_every_particle(&grid, &particle_points);
-    let delta = time.delta().as_secs_f32() * TIME_SCALE;
 
+    let densities = &pressure_handler::calculate_density_for_every_particle(
+        &grid,
+        &particle_points,
+        &connected_cells,
+    );
+
+    let delta = time.delta().as_secs_f32() * TIME_SCALE;
     particles
         .par_iter_mut()
         .for_each(|(mut transform, mut particle)| {
             let pressure_forece: Vec2 = if DEBUG_USE_PRESSURE {
-                -calculate_pressure_force(particle.index, &particle_points, &grid, densities)
+                -calculate_pressure_force(
+                    particle.index,
+                    &connected_cells[particle.index],
+                    &particle_points,
+                    &grid,
+                    densities,
+                )
             } else {
                 Vec2::ZERO
             };

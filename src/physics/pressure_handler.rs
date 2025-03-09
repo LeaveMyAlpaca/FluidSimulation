@@ -2,11 +2,7 @@ use crate::{
     particle_grid::{self, pixel_pos_to_gird_pos},
     particles_spawning::{self, PARTICLES_TO_SPAWN},
 };
-use bevy::{
-    math::Vec2,
-    prelude::*,
-    tasks::{ParallelSlice, ParallelSliceMut},
-};
+use bevy::{math::Vec2, prelude::*, tasks::ParallelSlice};
 use std::f32::consts::PI;
 
 // can't use SMOOTHING_DISTANCE.powi(4) so just multiply 4 times
@@ -33,7 +29,8 @@ fn smoothing_kernel(distance: f32) -> f32 {
 
 pub fn calculate_density_for_every_particle(
     particles_gird: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
-    particles_pos: &Vec<Vec2>,
+    particles_pos: &[Vec2],
+    connected_cells: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
 ) -> Vec<f32> {
     let input = vec![0f32; particles_spawning::PARTICLES_TO_SPAWN as usize];
     let data_chuncks = input.par_splat_map(bevy::tasks::ComputeTaskPool::get(), None, |i, data| {
@@ -41,8 +38,10 @@ pub fn calculate_density_for_every_particle(
         let mut output_chunck = Vec::new();
 
         for internal_index in 0..data.len() {
+            let real_particle_index = internal_index + i;
             output_chunck.push(sample_density(
-                &particles_pos[internal_index + i],
+                &particles_pos[real_particle_index],
+                &connected_cells[real_particle_index],
                 particles_gird,
                 particles_pos,
             ));
@@ -59,17 +58,15 @@ pub fn calculate_density_for_every_particle(
 }
 pub fn calculate_pressure_force(
     sample_particel_index: usize,
+    sample_connected_cells: &Vec<usize>,
     particles_pos: &[Vec2],
     particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
     densities: &[f32],
 ) -> Vec2 {
     let sample_point = particles_pos[sample_particel_index];
     let mut pressure: Vec2 = Vec2::ZERO;
-    let connected_cells =
-        particle_grid::get_connected_cells_indexes(&pixel_pos_to_gird_pos(&sample_point));
-
-    for cell in connected_cells {
-        for particle_index_ref in &particle_grid[cell] {
+    for cell in sample_connected_cells {
+        for particle_index_ref in &particle_grid[cell.to_owned()] {
             let particle_index = particle_index_ref.to_owned();
             let pos = particles_pos[particle_index];
             if particle_index == sample_particel_index || sample_point == pos {
@@ -109,15 +106,15 @@ pub const SMOOTHING_DISTANCE: f32 = 100f32;
 const INFLUENCE_MODIFIER: f32 = 10f32;
 pub fn sample_density(
     sample_particle_pos: &Vec2,
+    sample_connected_cells: &Vec<usize>,
     particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
-    particles: &Vec<Vec2>,
+    particles: &[Vec2],
 ) -> f32 {
     let mut density: f32 = 0f32;
-    let connected_cells =
-        particle_grid::get_connected_cells_indexes(&pixel_pos_to_gird_pos(&sample_particle_pos));
-    for cell in connected_cells {
-        for particle_index in &particle_grid[cell] {
-            let influence = get_influence(&sample_particle_pos, &particles[particle_index.clone()]);
+    for cell in sample_connected_cells {
+        for particle_index in &particle_grid[cell.to_owned()] {
+            let influence =
+                get_influence(sample_particle_pos, &particles[particle_index.to_owned()]);
             density += influence * INFLUENCE_MODIFIER;
         }
     }
