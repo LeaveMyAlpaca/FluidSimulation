@@ -35,39 +35,11 @@ pub fn handle_particles_physics(
     particles
         .par_iter_mut()
         .for_each(|(mut transform, mut particle)| {
-            // if DEBUG_SHOW_PARTICLE_DENSITY {
-            //     println!(
-            //         "density:{} {}",
-            //         densities[particle_index as usize], particle_index
-            //     );
-            //     let scale =
-            //         particles_spawning::PARTICLE_RAY * densities[particle_index as usize] * 200f32;
-            //     transform.scale = vec3(scale, scale, 1f32);
-            // }
-            // if DEBUG_SHOW_DISTANCE_CHECK {
-            //     let mut points = 0f32;
-            //     for point in &particle_points {
-            //         let pos = transform.translation.xy();
-            //         if point == &pos {
-            //             continue;
-            //         }
-            //         points += 10f32 / point.distance_squared(pos);
-            //     }
-            //     println!("points: {}", points);
-            //     let scale = particles_spawning::PARTICLE_RAY * points * 5f32;
-            //     transform.scale = vec3(scale, scale, 1f32);
-            // }
-
             let pressure_forece: Vec2 = if DEBUG_USE_PRESSURE {
                 -calculate_pressure_force(particle.index, &particle_points, &grid, densities)
             } else {
                 Vec2::ZERO
             };
-            // if DEBUG_SHOW_PARTICLE_PRESSURE {
-            //     let pos = transform.translation.xy();
-            //     // println!("pressure :{}", pressure_forece);
-            //     gizmos.arrow_2d(pos, pos + pressure_forece, CORAL);
-            // }
 
             // this is not great because we take velocity for drag calculation from last frame so the more frames we have
             // the more accurate the calculations will be, this is OK for our purpose
@@ -76,9 +48,7 @@ pub fn handle_particles_physics(
                 - calc_drag_force(particle.velocity, particle.area);
 
             let a = GRAVITY + f / particle.mass;
-            // if !DEBUG_RUN_PARTICLE_PHYSICS {
-            //     continue;
-            // }
+
             // s = vt + (at^2)/2
             let s = particle.velocity * delta + (a * delta.squared()) / 2f32;
             transform.translation += vec3(s.x, s.y, 0f32);
