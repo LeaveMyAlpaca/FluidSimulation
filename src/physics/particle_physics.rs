@@ -21,7 +21,6 @@ const DEBUG_SHOW_DISTANCE_CHECK: bool = false;
 pub fn handle_particles_physics(
     mut particles: Query<(&mut Transform, &mut Particle), With<Particle>>,
     time: Res<Time>,
-    mut gizmos: Gizmos,
 ) {
     //
     let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_TO_SPAWN as usize);

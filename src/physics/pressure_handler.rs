@@ -1,8 +1,12 @@
 use crate::{
     particle_grid::{self, pixel_pos_to_gird_pos},
-    particles_spawning,
+    particles_spawning::{self, PARTICLES_TO_SPAWN},
 };
-use bevy::{math::Vec2, prelude::*};
+use bevy::{
+    math::Vec2,
+    prelude::*,
+    tasks::{ParallelSlice, ParallelSliceMut},
+};
 use std::f32::consts::PI;
 
 // can't use SMOOTHING_DISTANCE.powi(4) so just multiply 4 times
@@ -31,22 +35,33 @@ pub fn calculate_density_for_every_particle(
     particles_gird: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
     particles_pos: &Vec<Vec2>,
 ) -> Vec<f32> {
-    let mut output = Vec::with_capacity(particles_spawning::PARTICLES_TO_SPAWN as usize);
+    let input = vec![0f32; particles_spawning::PARTICLES_TO_SPAWN as usize];
+    let data_chuncks = input.par_splat_map(bevy::tasks::ComputeTaskPool::get(), None, |i, data| {
+        // `i` is the starting index of the current chunk
+        let mut output_chunck = Vec::new();
 
-    for i in 0..particles_spawning::PARTICLES_TO_SPAWN as usize {
-        output.push(sample_density(
-            &particles_pos[i],
-            particles_gird,
-            particles_pos,
-        ));
+        for internal_index in 0..data.len() {
+            output_chunck.push(sample_density(
+                &particles_pos[internal_index + i],
+                particles_gird,
+                particles_pos,
+            ));
+        }
+        output_chunck
+    });
+    let mut output = Vec::with_capacity(PARTICLES_TO_SPAWN as usize);
+    for chunck in data_chuncks {
+        for density in chunck {
+            output.push(density);
+        }
     }
     output
 }
 pub fn calculate_pressure_force(
     sample_particel_index: usize,
-    particles_pos: &Vec<Vec2>,
+    particles_pos: &[Vec2],
     particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
-    densities: &Vec<f32>,
+    densities: &[f32],
 ) -> Vec2 {
     let sample_point = particles_pos[sample_particel_index];
     let mut pressure: Vec2 = Vec2::ZERO;
