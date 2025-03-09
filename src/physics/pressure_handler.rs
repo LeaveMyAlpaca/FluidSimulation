@@ -2,11 +2,7 @@ use crate::{
     particle_grid::{self, pixel_pos_to_gird_pos},
     particles_spawning::{self, PARTICLES_TO_SPAWN},
 };
-use bevy::{
-    math::Vec2,
-    prelude::*,
-    tasks::{ParallelSlice, ParallelSliceMut},
-};
+use bevy::{math::Vec2, prelude::*, tasks::ParallelSlice};
 use std::f32::consts::PI;
 
 // can't use SMOOTHING_DISTANCE.powi(4) so just multiply 4 times
@@ -33,7 +29,7 @@ fn smoothing_kernel(distance: f32) -> f32 {
 
 pub fn calculate_density_for_every_particle(
     particles_gird: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
-    particles_pos: &Vec<Vec2>,
+    particles_pos: &[Vec2],
 ) -> Vec<f32> {
     let input = vec![0f32; particles_spawning::PARTICLES_TO_SPAWN as usize];
     let data_chuncks = input.par_splat_map(bevy::tasks::ComputeTaskPool::get(), None, |i, data| {
@@ -110,14 +106,15 @@ const INFLUENCE_MODIFIER: f32 = 10f32;
 pub fn sample_density(
     sample_particle_pos: &Vec2,
     particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
-    particles: &Vec<Vec2>,
+    particles: &[Vec2],
 ) -> f32 {
     let mut density: f32 = 0f32;
     let connected_cells =
-        particle_grid::get_connected_cells_indexes(&pixel_pos_to_gird_pos(&sample_particle_pos));
+        particle_grid::get_connected_cells_indexes(&pixel_pos_to_gird_pos(sample_particle_pos));
     for cell in connected_cells {
         for particle_index in &particle_grid[cell] {
-            let influence = get_influence(&sample_particle_pos, &particles[particle_index.clone()]);
+            let influence =
+                get_influence(sample_particle_pos, &particles[particle_index.to_owned()]);
             density += influence * INFLUENCE_MODIFIER;
         }
     }
