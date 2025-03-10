@@ -23,20 +23,7 @@ pub fn handle_particles_physics(
     mut particles: Query<(&mut Transform, &mut Particle), With<Particle>>,
     time: Res<Time>,
 ) {
-    // array of vectors for particles that can be indexed by particle index to aces connected cells
-    // so i don't have to calculate them multiple times
-    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_COUNT * 9) as usize);
-    // TODO: test if parallel could work
-    let mut i = 0;
-    particles.iter().for_each(|(transform, _)| {
-        let cells = particle_grid::get_connected_cells_indexes(
-            &particle_grid::pixel_pos_to_gird_pos(&transform.translation.xy()),
-        );
-        for cell in cells {
-            connected_cells.push(cell);
-        }
-        i += 1;
-    });
+    let connected_cells = calculate_connected_cells_for_every_particle(&particles);
     let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
     for (transform, _) in &particles {
         particle_points.push(transform.translation.xy());
@@ -81,6 +68,26 @@ pub fn handle_particles_physics(
             particle.velocity += a * delta;
             resolve_colisions(&mut particle, &mut transform);
         });
+}
+
+fn calculate_connected_cells_for_every_particle(
+    particles: &Query<'_, '_, (&mut Transform, &mut Particle), With<Particle>>,
+) -> Vec<usize> {
+    // array of vectors for particles that can be indexed by particle index to aces connected cells
+    // so i don't have to calculate them multiple times
+    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_COUNT * 9) as usize);
+    // TODO: test if parallel could work
+    let mut i = 0;
+    particles.iter().for_each(|(transform, _)| {
+        let cells = particle_grid::get_connected_cells_indexes(
+            &particle_grid::pixel_pos_to_gird_pos(&transform.translation.xy()),
+        );
+        for cell in cells {
+            connected_cells.push(cell);
+        }
+        i += 1;
+    });
+    connected_cells
 }
 fn calc_drag_force(velocity: Vec2, area: f32) -> Vec2 {
     // F = .5*d*v^2*C*A https://en.wikipedia.org/wiki/Drag_(physics)
