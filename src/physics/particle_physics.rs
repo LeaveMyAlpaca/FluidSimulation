@@ -1,6 +1,7 @@
 use crate::{
     collisions::resolve_colisions,
-    particle_grid, particles_spawning,
+    particle_grid,
+    particles_spawning::{self, PARTICLES_TO_SPAWN},
     pressure_handler::{self, calculate_pressure_force},
 };
 use bevy::{math::*, prelude::*};
@@ -24,17 +25,16 @@ pub fn handle_particles_physics(
 ) {
     // array of vectors for particles that can be indexed by particle index to aces connected cells
     // so i don't have to calculate them multiple times
-    let mut connected_cells: [Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize] =
-    // could think about using Vec::with_capacity
-        [const { Vec::new() }; particles_spawning::PARTICLES_TO_SPAWN as usize];
-
+    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_TO_SPAWN * 9) as usize);
     // TODO: test if parallel could work
     let mut i = 0;
     particles.iter().for_each(|(transform, _)| {
-        connected_cells[i] = particle_grid::get_connected_cells_indexes(
+        let cells = particle_grid::get_connected_cells_indexes(
             &particle_grid::pixel_pos_to_gird_pos(&transform.translation.xy()),
         );
-        // println!("connected_cells[i] {:?}", connected_cells[i]);
+        for cell in cells {
+            connected_cells.push(cell);
+        }
         i += 1;
     });
     let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_TO_SPAWN as usize);
@@ -56,7 +56,9 @@ pub fn handle_particles_physics(
             let pressure_forece: Vec2 = if DEBUG_USE_PRESSURE {
                 -calculate_pressure_force(
                     particle.index,
-                    &connected_cells[particle.index],
+                    connected_cells
+                        .get(particle.index * 9..(particle.index + 1) * 9)
+                        .unwrap(),
                     &particle_points,
                     &grid,
                     densities,

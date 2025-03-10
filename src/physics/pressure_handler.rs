@@ -30,7 +30,7 @@ fn smoothing_kernel(distance: f32) -> f32 {
 pub fn calculate_density_for_every_particle(
     particles_gird: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
     particles_pos: &[Vec2],
-    connected_cells: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
+    connected_cells: &[usize],
 ) -> Vec<f32> {
     let input = vec![0f32; particles_spawning::PARTICLES_TO_SPAWN as usize];
     let data_chuncks = input.par_splat_map(bevy::tasks::ComputeTaskPool::get(), None, |i, data| {
@@ -41,7 +41,9 @@ pub fn calculate_density_for_every_particle(
             let real_particle_index = internal_index + i;
             output_chunck.push(sample_density(
                 &particles_pos[real_particle_index],
-                &connected_cells[real_particle_index],
+                connected_cells
+                    .get(real_particle_index * 9..(real_particle_index + 1) * 9)
+                    .unwrap(),
                 particles_gird,
                 particles_pos,
             ));
@@ -58,7 +60,7 @@ pub fn calculate_density_for_every_particle(
 }
 pub fn calculate_pressure_force(
     sample_particel_index: usize,
-    sample_connected_cells: &Vec<usize>,
+    sample_connected_cells: &[usize],
     particles_pos: &[Vec2],
     particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
     densities: &[f32],
@@ -106,7 +108,7 @@ pub const SMOOTHING_DISTANCE: f32 = 100f32;
 const INFLUENCE_MODIFIER: f32 = 10f32;
 pub fn sample_density(
     sample_particle_pos: &Vec2,
-    sample_connected_cells: &Vec<usize>,
+    sample_connected_cells: &[usize],
     particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
     particles: &[Vec2],
 ) -> f32 {
