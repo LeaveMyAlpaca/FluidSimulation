@@ -1,7 +1,7 @@
 use crate::{
     collisions::resolve_colisions,
     particle_grid,
-    particles_spawning::{self, PARTICLES_TO_SPAWN},
+    particles_spawning::{self, PARTICLES_COUNT},
     pressure_handler::{self, calculate_pressure_force},
 };
 use bevy::{math::*, prelude::*};
@@ -25,7 +25,7 @@ pub fn handle_particles_physics(
 ) {
     // array of vectors for particles that can be indexed by particle index to aces connected cells
     // so i don't have to calculate them multiple times
-    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_TO_SPAWN * 9) as usize);
+    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_COUNT * 9) as usize);
     // TODO: test if parallel could work
     let mut i = 0;
     particles.iter().for_each(|(transform, _)| {
@@ -37,7 +37,7 @@ pub fn handle_particles_physics(
         }
         i += 1;
     });
-    let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_TO_SPAWN as usize);
+    let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
     for (transform, _) in &particles {
         particle_points.push(transform.translation.xy());
     }

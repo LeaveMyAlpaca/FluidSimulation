@@ -10,7 +10,7 @@ pub const STANDARD_PARTICLE_MASS: f32 = 20f32;
 pub fn handle_spawning_particles(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let mut rng = rand::rng();
 
-    for i in 0..PARTICLES_TO_SPAWN {
+    for i in 0..PARTICLES_COUNT {
         spawn_particle(
             STANDARD_PARTICLE_MASS,
             PARTICLE_RAY,
@@ -41,11 +41,11 @@ fn spawn_particle(
     commands.spawn((particle, transform, sprite));
 }
 
-pub const PARTICLES_TO_SPAWN: u32 = 40000;
+pub const PARTICLES_COUNT: u32 = 10000;
 const PARTICLES_LAYERS: u32 = 40;
 const PARTICLES_SPACING: f32 = 20f32;
 
-const PARTICLES_SIZE_ASPECT: f32 = PARTICLES_TO_SPAWN as f32 / PARTICLES_LAYERS as f32;
+const PARTICLES_SIZE_ASPECT: f32 = PARTICLES_COUNT as f32 / PARTICLES_LAYERS as f32;
 const OFFSET_VEC: Vec2 = vec2(
     -PARTICLES_SPACING * PARTICLES_SIZE_ASPECT / 2f32,
     -(PARTICLES_LAYERS as f32 / 2f32) * PARTICLES_SPACING,

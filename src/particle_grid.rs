@@ -1,20 +1,17 @@
-use std::usize;
-
 use bevy::math::{Vec2, vec2};
 
 use crate::{
-    bounding_box::BOX_BOUNDS_SIZE_PIXELS,
-    particles_spawning,
-    pressure_handler::{self, SMOOTHING_DISTANCE},
+    bounding_box::BOX_BOUNDS_SIZE_PIXELS, particles_spawning, pressure_handler::SMOOTHING_DISTANCE,
 };
 
 pub fn split_particles_into_grid(
-    particles: &Vec<Vec2>,
-) -> [Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize] {
-    let mut output: [Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize] =
-        [const { Vec::new() }; particles_spawning::PARTICLES_TO_SPAWN as usize];
+    particles: &[Vec2],
+) -> [Vec<usize>; particles_spawning::PARTICLES_COUNT as usize] {
+    // maybe change to 1d vec???
+    let mut output: [Vec<usize>; particles_spawning::PARTICLES_COUNT as usize] =
+        [const { Vec::new() }; particles_spawning::PARTICLES_COUNT as usize];
 
-    for i in 0..particles_spawning::PARTICLES_TO_SPAWN as usize {
+    for i in 0..particles_spawning::PARTICLES_COUNT as usize {
         output[pos_to_grid_index(&particles[i])].push(i);
     }
 

@@ -1,6 +1,6 @@
 use crate::{
     particle_grid::{self, pixel_pos_to_gird_pos},
-    particles_spawning::{self, PARTICLES_TO_SPAWN},
+    particles_spawning::{self, PARTICLES_COUNT},
 };
 use bevy::{math::Vec2, prelude::*, tasks::ParallelSlice};
 use std::f32::consts::PI;
@@ -28,11 +28,11 @@ fn smoothing_kernel(distance: f32) -> f32 {
 }
 
 pub fn calculate_density_for_every_particle(
-    particles_gird: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
+    particles_gird: &[Vec<usize>; particles_spawning::PARTICLES_COUNT as usize],
     particles_pos: &[Vec2],
     connected_cells: &[usize],
 ) -> Vec<f32> {
-    let input = vec![0f32; particles_spawning::PARTICLES_TO_SPAWN as usize];
+    let input = vec![0f32; particles_spawning::PARTICLES_COUNT as usize];
     let data_chuncks = input.par_splat_map(bevy::tasks::ComputeTaskPool::get(), None, |i, data| {
         // `i` is the starting index of the current chunk
         let mut output_chunck = Vec::new();
@@ -50,7 +50,7 @@ pub fn calculate_density_for_every_particle(
         }
         output_chunck
     });
-    let mut output = Vec::with_capacity(PARTICLES_TO_SPAWN as usize);
+    let mut output = Vec::with_capacity(PARTICLES_COUNT as usize);
     for chunck in data_chuncks {
         for density in chunck {
             output.push(density);
@@ -62,7 +62,7 @@ pub fn calculate_pressure_force(
     sample_particel_index: usize,
     sample_connected_cells: &[usize],
     particles_pos: &[Vec2],
-    particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
+    particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_COUNT as usize],
     densities: &[f32],
 ) -> Vec2 {
     let sample_point = particles_pos[sample_particel_index];
@@ -109,7 +109,7 @@ const INFLUENCE_MODIFIER: f32 = 10f32;
 pub fn sample_density(
     sample_particle_pos: &Vec2,
     sample_connected_cells: &[usize],
-    particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_TO_SPAWN as usize],
+    particle_grid: &[Vec<usize>; particles_spawning::PARTICLES_COUNT as usize],
     particles: &[Vec2],
 ) -> f32 {
     let mut density: f32 = 0f32;

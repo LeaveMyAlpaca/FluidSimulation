@@ -77,8 +77,7 @@ fn debug_input_update(
     gizmos.circle_2d(pointer_isometry, SMOOTHING_DISTANCE, BLUE);
 
     if DEBUG_CHECKED_PARTICLES {
-        let mut particle_points =
-            Vec::with_capacity(particles_spawning::PARTICLES_TO_SPAWN as usize);
+        let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
         for (transform, _) in &particles {
             particle_points.push(transform.translation.xy());
         }
