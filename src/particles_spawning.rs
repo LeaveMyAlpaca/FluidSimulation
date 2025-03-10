@@ -3,7 +3,7 @@ use bevy::{math::vec2, prelude::*};
 use rand::{Rng, rngs::ThreadRng};
 
 const CIRCLE_SPRITE_PATH: &str = "sprites/circle.png";
-pub const PARTICLE_RAY: f32 = 0.4f32;
+pub const PARTICLE_RAY: f32 = 0.2f32;
 pub const PARTICLE_RESOULTION: f32 = 50f32;
 pub const STANDARD_PARTICLE_MASS: f32 = 20f32;
 
@@ -41,7 +41,7 @@ fn spawn_particle(
     commands.spawn((particle, transform, sprite));
 }
 
-pub const PARTICLES_COUNT: u32 = 10000;
+pub const PARTICLES_COUNT: u32 = 3000;
 const PARTICLES_LAYERS: u32 = 40;
 const PARTICLES_SPACING: f32 = 20f32;
 

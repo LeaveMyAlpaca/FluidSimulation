@@ -4,13 +4,13 @@ use crate::{
     particles_spawning::{self, PARTICLES_COUNT},
     pressure_handler::{self, calculate_pressure_force},
 };
-use bevy::{math::*, prelude::*};
+use bevy::{math::*, prelude::*, transform};
 
 // physics settings
 const GRAVITY: Vec2 = Vec2::new(0f32, 0f32);
 const TIME_SCALE: f32 = 2f32;
 const AIR_DENSITY: f32 = 1f32;
-const PARTICLE_DRAG_COEFICIENT: f32 = 0.001f32;
+const PARTICLE_DRAG_COEFICIENT: f32 = 0.01f32;
 const PRESSURE_FORCE_MODIFIER: f32 = 5f32;
 
 const DEBUG_USE_PRESSURE: bool = true;
@@ -23,20 +23,29 @@ pub fn handle_particles_physics(
     mut particles: Query<(&mut Transform, &mut Particle), With<Particle>>,
     time: Res<Time>,
 ) {
+    let delta = time.delta().as_secs_f32() * TIME_SCALE;
+    particles
+        .par_iter_mut()
+        .for_each(|(transform, mut particle)| {
+            let a = GRAVITY;
+            particle.velocity += a * delta;
+            particle.predicted_position = transform.translation.xy() + particle.velocity / 120f32;
+        });
+
     let connected_cells = calculate_connected_cells_for_every_particle(&particles);
-    let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
-    for (transform, _) in &particles {
-        particle_points.push(transform.translation.xy());
+    let mut particle_predicted_positions =
+        Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
+    for (_, particle) in &particles {
+        particle_predicted_positions.push(particle.predicted_position);
     }
-    let grid = particle_grid::split_particles_into_grid(&particle_points);
+    let grid = particle_grid::split_particles_into_grid(&particle_predicted_positions);
 
     let densities = &pressure_handler::calculate_density_for_every_particle(
         &grid,
-        &particle_points,
+        &particle_predicted_positions,
         &connected_cells,
     );
 
-    let delta = time.delta().as_secs_f32() * TIME_SCALE;
     particles
         .par_iter_mut()
         .for_each(|(mut transform, mut particle)| {
@@ -46,7 +55,7 @@ pub fn handle_particles_physics(
                     connected_cells
                         .get(particle.index * 9..(particle.index + 1) * 9)
                         .unwrap(),
-                    &particle_points,
+                    &particle_predicted_positions,
                     &grid,
                     densities,
                 )
@@ -54,18 +63,14 @@ pub fn handle_particles_physics(
                 Vec2::ZERO
             };
 
-            // this is not great because we take velocity for drag calculation from last frame so the more frames we have
-            // the more accurate the calculations will be, this is OK for our purpose
-            //WARN: because of that our calculations could be UN deterministic ?
             let f = pressure_forece * PRESSURE_FORCE_MODIFIER
                 - calc_drag_force(particle.velocity, particle.area);
 
-            let a = GRAVITY + f / particle.mass;
-
-            // s = vt + (at^2)/2
-            let s = particle.velocity * delta + (a * delta.squared()) / 2f32;
-            transform.translation += vec3(s.x, s.y, 0f32);
+            let a = f / particle.mass;
             particle.velocity += a * delta;
+            // s = vt + (at^2)/2
+            let s = particle.velocity * delta;
+            transform.translation += vec3(s.x, s.y, 0f32);
             resolve_colisions(&mut particle, &mut transform);
         });
 }
@@ -102,6 +107,7 @@ pub(crate) struct Particle {
     pub velocity: Vec2,
     pub area: f32,
     pub index: usize,
+    pub predicted_position: Vec2,
 }
 impl Particle {
     pub fn new(mass: f32, velocity: Vec2, ray: f32, index: usize) -> Particle {
@@ -111,6 +117,7 @@ impl Particle {
             velocity,
             area: Particle::calc_area(ray),
             index,
+            predicted_position: Vec2::ZERO,
         }
     }
     fn calc_area(ray: f32) -> f32 {
