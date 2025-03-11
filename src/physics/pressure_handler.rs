@@ -93,7 +93,7 @@ fn calculate_shared_pressure(density_a: f32, density_b: f32) -> f32 {
     let pressure_b = density_to_pressure(density_b);
     (pressure_a + pressure_b) / 2f32
 }
-const TARGET_DENSITY: f32 = 0.0001f32;
+pub const TARGET_DENSITY: f32 = 0.01f32;
 const PRESSURE_MULTIPLIER: f32 = 1000000.0f32;
 fn density_to_pressure(density: f32) -> f32 {
     let density_error = density - TARGET_DENSITY;

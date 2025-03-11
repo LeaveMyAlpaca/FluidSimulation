@@ -1,3 +1,5 @@
+use std::vec;
+
 use crate::{
     collisions::resolve_colisions,
     particle_grid,
@@ -11,7 +13,7 @@ const GRAVITY: Vec2 = Vec2::new(0f32, 0f32);
 const TIME_SCALE: f32 = 2f32;
 const AIR_DENSITY: f32 = 1f32;
 const PARTICLE_DRAG_COEFICIENT: f32 = 0.01f32;
-const PRESSURE_FORCE_MODIFIER: f32 = 5f32;
+const PRESSURE_FORCE_MODIFIER: f32 = 2f32;
 
 const DEBUG_USE_PRESSURE: bool = true;
 const DEBUG_RUN_PARTICLE_PHYSICS: bool = true;
@@ -20,7 +22,7 @@ const DEBUG_SHOW_PARTICLE_PRESSURE: bool = false;
 const DEBUG_SHOW_DISTANCE_CHECK: bool = false;
 
 pub fn handle_particles_physics(
-    mut particles: Query<(&mut Transform, &mut Particle), With<Particle>>,
+    mut particles: Query<(&mut Transform, &mut Particle)>,
     time: Res<Time>,
 ) {
     let delta = time.delta().as_secs_f32() * TIME_SCALE;
@@ -78,7 +80,7 @@ pub fn handle_particles_physics(
 }
 
 fn calculate_connected_cells_for_every_particle(
-    particles: &Query<'_, '_, (&mut Transform, &mut Particle), With<Particle>>,
+    particles: &Query<(&mut Transform, &mut Particle)>,
 ) -> Vec<usize> {
     // array of vectors for particles that can be indexed by particle index to aces connected cells
     // so i don't have to calculate them multiple times
