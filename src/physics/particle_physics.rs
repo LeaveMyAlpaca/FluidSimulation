@@ -72,6 +72,8 @@ pub fn handle_particles_physics(
             let s = particle.velocity * delta;
             transform.translation += vec3(s.x, s.y, 0f32);
             resolve_colisions(&mut particle, &mut transform);
+
+            particle.density = densities[particle.index];
         });
 }
 
@@ -108,6 +110,8 @@ pub(crate) struct Particle {
     pub area: f32,
     pub index: usize,
     pub predicted_position: Vec2,
+    // used for visuals
+    pub density: f32,
 }
 impl Particle {
     pub fn new(mass: f32, velocity: Vec2, ray: f32, index: usize) -> Particle {
@@ -118,6 +122,7 @@ impl Particle {
             area: Particle::calc_area(ray),
             index,
             predicted_position: Vec2::ZERO,
+            density: 0f32,
         }
     }
     fn calc_area(ray: f32) -> f32 {

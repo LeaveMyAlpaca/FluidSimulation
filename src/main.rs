@@ -5,17 +5,16 @@ mod particle_grid;
 #[path = "physics/particle_physics.rs"]
 mod particle_physics;
 mod particles_spawning;
+mod particles_visuals;
 #[path = "physics/pressure_handler.rs"]
 mod pressure_handler;
 mod ui_handler;
 
 use bevy::{
-    color::palettes::css::{BLUE, BROWN, GREEN, RED, YELLOW},
+    color::palettes::css::{BLUE, GREEN, RED},
     math::vec2,
     prelude::*,
-    text::cosmic_text::Color,
 };
-use particle_grid::split_particles_into_grid;
 use particle_physics::Particle;
 use pressure_handler::SMOOTHING_DISTANCE;
 
@@ -29,6 +28,7 @@ fn main() {
                 particle_physics::handle_particles_physics,
                 ui_handler::update_ui,
                 debug_input_update,
+                particles_visuals::update_particles_visuals,
             ),
         )
         .run();
