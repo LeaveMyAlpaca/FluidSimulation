@@ -10,12 +10,17 @@ mod particles_visuals;
 mod pressure_handler;
 mod ui_handler;
 
+use std::usize;
+
 use bevy::{
     color::palettes::css::{BLUE, GREEN, RED},
     math::vec2,
     prelude::*,
 };
+use bounding_box::BOX_BOUNDS_SIZE_PIXELS;
+use particle_grid::{GRID_SIZE_X, GRID_SIZE_Y, TOTAL_GRID_SIZE, pos_to_grid_index};
 use particle_physics::Particle;
+use particles_spawning::PARTICLE_RAY;
 use pressure_handler::SMOOTHING_DISTANCE;
 
 fn main() {
@@ -34,6 +39,10 @@ fn main() {
         .run();
 }
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
+    println!(
+        "Debug {}",
+        pos_to_grid_index(&(BOX_BOUNDS_SIZE_PIXELS / 2f32 + vec2(0f32, 1f32)))
+    );
     commands.spawn(Camera2d);
     commands.spawn(DebugPointer {
         pos: Vec2::new(1f32, 1f32),
@@ -74,25 +83,46 @@ fn debug_input_update(
 
     let pointer_isometry = Isometry2d::new(pointer.pos, Rot2::degrees(0f32));
     gizmos.circle_2d(pointer_isometry, 10f32, RED);
-    gizmos.circle_2d(pointer_isometry, SMOOTHING_DISTANCE, BLUE);
+    gizmos.circle_2d(pointer_isometry, SMOOTHING_DISTANCE as f32, BLUE);
 
     if DEBUG_CHECKED_PARTICLES {
-        let mut particle_points = Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
-        for (transform, _) in &particles {
-            particle_points.push(transform.translation.xy());
+        let mut particle_predicted_positions =
+            Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
+        for (_, particle) in &particles {
+            particle_predicted_positions.push(particle.predicted_position);
         }
-        let grid = particle_grid::split_particles_into_grid(&particle_points);
+        let grid = particle_grid::split_particles_into_grid(&particle_predicted_positions);
+        let connected_pos =
+            particle_grid::get_connected_cells(&particle_grid::pixel_pos_to_gird_pos(&pointer.pos));
 
+        for cell_pos in connected_pos {
+            let pixel_pos = (cell_pos - vec2(GRID_SIZE_X / 2f32, GRID_SIZE_Y / 2f32))
+                * SMOOTHING_DISTANCE as f32;
+            let iso = Isometry2d::new(pixel_pos, Rot2::degrees(0f32));
+            gizmos.rect_2d(
+                iso,
+                vec2(SMOOTHING_DISTANCE as f32, SMOOTHING_DISTANCE as f32),
+                GREEN,
+            );
+        }
         let connected_indexes = particle_grid::get_connected_cells_indexes(
             &particle_grid::pixel_pos_to_gird_pos(&pointer.pos),
         );
+        // println!(
+        //     "&particle_grid::pixel_pos_to_gird_pos(&pointer.pos) {}",
+        //     &particle_grid::pixel_pos_to_gird_pos(&pointer.pos)
+        // );
         for cell_index in connected_indexes {
+            if cell_index == usize::MAX {
+                continue;
+            }
+
             for particle_index in &grid[cell_index] {
                 let pointer_isometry = Isometry2d::new(
-                    particle_points[particle_index.to_owned()],
+                    particle_predicted_positions[particle_index.to_owned()],
                     Rot2::degrees(0f32),
                 );
-                gizmos.circle_2d(pointer_isometry, 5f32, GREEN);
+                gizmos.circle_2d(pointer_isometry, 1f32, RED);
             }
         }
     }
