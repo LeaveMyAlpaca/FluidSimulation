@@ -39,10 +39,6 @@ fn main() {
         .run();
 }
 fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
-    println!(
-        "Debug {}",
-        pos_to_grid_index(&(BOX_BOUNDS_SIZE_PIXELS / 2f32 + vec2(0f32, 1f32)))
-    );
     commands.spawn(Camera2d);
     commands.spawn(DebugPointer {
         pos: Vec2::new(1f32, 1f32),
