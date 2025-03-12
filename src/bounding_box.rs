@@ -1,6 +1,6 @@
 use bevy::{color::palettes::css::GREY, math::*, prelude::*, sprite::Sprite};
 
-pub const BOX_BOUNDS_SIZE_PIXELS: Vec2 = Vec2::new(1800f32, 900f32);
+pub const BOX_BOUNDS_SIZE_PIXELS: Vec2 = Vec2::new(1700f32, 1000f32);
 const BOX_SPRITE_PATH: &str = "sprites/box.png";
 pub const BOX_SPRITE_RESOLUTION: Vec2 = Vec2::new(50f32, 50f32);
 

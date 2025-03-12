@@ -3,9 +3,9 @@ use bevy::{math::vec2, prelude::*};
 use rand::{Rng, rngs::ThreadRng};
 
 const CIRCLE_SPRITE_PATH: &str = "sprites/circle.png";
-pub const PARTICLE_RAY: f32 = 0.2f32;
+pub const PARTICLE_RAY: f32 = 0.1f32;
 pub const PARTICLE_RESOULTION: f32 = 50f32;
-pub const STANDARD_PARTICLE_MASS: f32 = 20f32;
+pub const STANDARD_PARTICLE_MASS: f32 = 2f32;
 
 pub fn handle_spawning_particles(commands: &mut Commands, asset_server: &Res<AssetServer>) {
     let mut rng = rand::rng();
@@ -41,7 +41,7 @@ fn spawn_particle(
     commands.spawn((particle, transform, sprite));
 }
 
-pub const PARTICLES_COUNT: u32 = 3000;
+pub const PARTICLES_COUNT: u32 = 10000;
 const PARTICLES_LAYERS: u32 = 40;
 const PARTICLES_SPACING: f32 = 20f32;
 
@@ -57,7 +57,6 @@ fn get_particle_spawn_position(index: f32, rng: &mut ThreadRng) -> Vec2 {
 }
 fn get_random_spawn_point(rng: &mut ThreadRng) -> Vec2 {
     let real_box_size = BOX_BOUNDS_SIZE_PIXELS / 2f32;
-
     let y = rng.random_range(-(real_box_size.y) as i32..(real_box_size.y) as i32);
     let x = rng.random_range(-(real_box_size.x) as i32..(real_box_size.x) as i32);
 
