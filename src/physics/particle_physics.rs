@@ -24,6 +24,9 @@ const DEBUG_SHOW_DISTANCE_CHECK: bool = false;
 pub fn handle_particles_physics(
     mut particles: Query<(&mut Transform, &mut Particle)>,
     time: Res<Time>,
+    q_window: Query<&Window, With<PrimaryWindow>>,
+    mouse_buttons: Res<ButtonInput<MouseButton>>,
+    q_camera: Query<(&Camera, &GlobalTransform)>,
 ) {
     let delta = time.delta().as_secs_f32() * TIME_SCALE;
     particles
@@ -47,6 +50,50 @@ pub fn handle_particles_physics(
         &particle_predicted_positions,
         &connected_cells,
     );
+
+    // interactions
+    let mut use_interaction: bool = true;
+    // get the camera info and transform
+    // assuming there is exactly one main camera entity, so Query::single() is OK
+    let (camera, camera_transform) = q_camera.single();
+
+    // There is only one primary window, so we can similarly get it from the query:
+    let window = q_window.single();
+
+    // check if the cursor is inside the window and get its position
+    // then, ask bevy to convert into world coordinates, and truncate to discard Z
+    let cursor_option = window.cursor_position();
+    let mouse_position = match cursor_option {
+        Some(pos) => camera
+            .viewport_to_world(camera_transform, pos)
+            .map(|ray| ray.origin.truncate())
+            .unwrap(),
+        None => {
+            use_interaction = false;
+            Vec2::ZERO
+        }
+    };
+    let force_sign;
+    if mouse_buttons.pressed(MouseButton::Right) {
+        force_sign = -1f32;
+    } else if mouse_buttons.pressed(MouseButton::Left) {
+        // disabled because not working good enough
+        use_interaction = false;
+        force_sign = 0.5f32;
+    } else {
+        use_interaction = false;
+        force_sign = 0f32;
+    };
+
+        let interaction_force = match use_interaction {
+            true => player_interation_physics::calculate_interavtion_force(
+                particle.predicted_position,
+                mouse_position,
+                force_sign,
+                particle.velocity,
+            ),
+            false => Vec2::ZERO,
+        };
 
     particles
         .par_iter_mut()

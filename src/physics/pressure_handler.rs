@@ -100,8 +100,8 @@ fn calculate_shared_pressure(density_a: f32, density_b: f32) -> f32 {
     let pressure_b = density_to_pressure(density_b);
     (pressure_a + pressure_b) / 2f32
 }
-pub const TARGET_DENSITY: f32 = 0.08f32;
-const PRESSURE_MULTIPLIER: f32 = 1000000.0f32;
+pub const TARGET_DENSITY: f32 = 0.15f32;
+const PRESSURE_MULTIPLIER: f32 = 100000.0f32;
 fn density_to_pressure(density: f32) -> f32 {
     let density_error = density - TARGET_DENSITY;
     density_error * PRESSURE_MULTIPLIER
@@ -111,7 +111,7 @@ fn get_influence(a: &Vec2, b: &Vec2) -> f32 {
     smoothing_kernel(a.distance(b.xy()))
 }
 
-pub const SMOOTHING_DISTANCE: u32 = 20;
+pub const SMOOTHING_DISTANCE: u32 = 10;
 const INFLUENCE_MODIFIER: f32 = 10f32;
 pub fn sample_density(
     sample_particle_pos: &Vec2,
