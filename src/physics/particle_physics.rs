@@ -116,60 +116,53 @@ pub fn handle_particles_physics(
         let force = pressure_force * PRESSURE_FORCE_MODIFIER
             - calc_drag_force(particle.velocity, particle.area)
             + interaction_force;
+        let acceleration = force / particle.mass;
+        particle.velocity += acceleration * delta;
+    });
+    let mut velocities: Vec<Vec2> = Vec::with_capacity(PARTICLES_COUNT as usize);
+    // get velocities for viscosity
+    particles.iter().for_each(|(_, particle)| {
+        velocities.push(particle.velocity);
+    });
+
+    // apply viscosity
+    particles.par_iter_mut().for_each(|(_, mut particle)| {
+        let viscosity = calculate_viscosity_force(
+            particle.predicted_position,
+            particle.velocity,
+            &particle_predicted_positions,
+            // could add that as a separate property to particle so i don't have to get it twice
+            // but that's a pretty cheap operation
+            connected_cells
+                .get(&particle.index * 9..(&particle.index + 1) * 9)
+                .unwrap(),
+            &grid,
+            &velocities,
+        );
+        particle.velocity += viscosity;
+    });
+
     particles
         .par_iter_mut()
         .for_each(|(mut transform, mut particle)| {
-            let pressure_forece: Vec2 = if DEBUG_USE_PRESSURE {
-                -calculate_pressure_force(
-                    particle.index,
-                    connected_cells
-                        .get(particle.index * 9..(particle.index + 1) * 9)
-                        .unwrap(),
-                    &particle_predicted_positions,
-                    &grid,
-                    densities,
-                )
-            } else {
-                Vec2::ZERO
-            };
+            if particle.velocity.is_nan() {
+                particle.velocity = particle.last_velocity;
+            }
+            particle.last_velocity = particle.velocity;
 
-            let f = pressure_forece * PRESSURE_FORCE_MODIFIER
-                - calc_drag_force(particle.velocity, particle.area);
-
-            let a = f / particle.mass;
-            particle.velocity += a * delta;
-            // s = vt + (at^2)/2
             let s = particle.velocity * delta;
-            transform.translation += vec3(s.x, s.y, 0f32);
-            resolve_colisions(&mut particle, &mut transform);
 
+            transform.translation += vec3(s.x, s.y, 0f32);
+            resolve_collisions(&mut particle, &mut transform);
+            // just for visualization purposes
             particle.density = densities[particle.index];
         });
 }
 
-fn calculate_connected_cells_for_every_particle(
-    particles: &Query<(&mut Transform, &mut Particle)>,
-) -> Vec<usize> {
-    // array of vectors for particles that can be indexed by particle index to aces connected cells
-    // so i don't have to calculate them multiple times
-    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_COUNT * 9) as usize);
-    // TODO: test if parallel could work
-    let mut i = 0;
-    particles.iter().for_each(|(transform, _)| {
-        let cells = particle_grid::get_connected_cells_indexes(
-            &particle_grid::pixel_pos_to_gird_pos(&transform.translation.xy()),
-        );
-        for cell in cells {
-            connected_cells.push(cell);
-        }
-        i += 1;
-    });
-    connected_cells
-}
 fn calc_drag_force(velocity: Vec2, area: f32) -> Vec2 {
     // F = .5*d*v^2*C*A https://en.wikipedia.org/wiki/Drag_(physics)
     let speed_squared = velocity.length_squared();
-    AIR_DENSITY * speed_squared * PARTICLE_DRAG_COEFICIENT * area / 2f32 * velocity.normalize()
+    AIR_DENSITY * speed_squared * PARTICLE_DRAG_COEFFICIENT * area / 2f32 * velocity.normalize()
 }
 
 #[derive(Component)]
@@ -177,6 +170,7 @@ pub(crate) struct Particle {
     pub ray: f32,
     pub mass: f32,
     pub velocity: Vec2,
+    pub last_velocity: Vec2,
     pub area: f32,
     pub index: usize,
     pub predicted_position: Vec2,
@@ -189,6 +183,7 @@ impl Particle {
             ray,
             mass,
             velocity,
+            last_velocity: Vec2::ZERO,
             area: Particle::calc_area(ray),
             index,
             predicted_position: Vec2::ZERO,
