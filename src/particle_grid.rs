@@ -13,10 +13,11 @@ pub fn split_particles_into_grid(particles: &[Vec2]) -> [Vec<usize>; TOTAL_GRID_
     // maybe change to 1d vec???
     let mut output: [Vec<usize>; TOTAL_GRID_SIZE] = [const { Vec::new() }; TOTAL_GRID_SIZE];
 
+    // this parallel?
     for i in 0..particles_spawning::PARTICLES_COUNT as usize {
         // println!(" pos {}", particles[i]);
         let grid_index = pos_to_grid_index(&particles[i]);
-        if grid_index == usize::MAX {
+        if grid_index == usize::MAX || grid_index > TOTAL_GRID_SIZE {
             continue;
         }
         output[grid_index].push(i);
