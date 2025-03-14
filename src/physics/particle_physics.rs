@@ -28,6 +28,9 @@ pub fn handle_particles_physics(
     mouse_buttons: Res<ButtonInput<MouseButton>>,
     q_camera: Query<(&Camera, &GlobalTransform)>,
 ) {
+    if !RUN_PHYSICS {
+        return;
+    }
     let delta = time.delta().as_secs_f32() * TIME_SCALE;
     particles
         .par_iter_mut()
@@ -37,7 +40,7 @@ pub fn handle_particles_physics(
             particle.predicted_position = transform.translation.xy() + particle.velocity / 120f32;
         });
 
-    let connected_cells = calculate_connected_cells_for_every_particle(&particles);
+    let connected_cells = particle_grid::calculate_connected_cells_for_every_particle(&particles);
     let mut particle_predicted_positions =
         Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
     for (_, particle) in &particles {
@@ -85,6 +88,21 @@ pub fn handle_particles_physics(
         force_sign = 0f32;
     };
 
+    particles.par_iter_mut().for_each(|(_, mut particle)| {
+        let pressure_force: Vec2 = if DEBUG_USE_PRESSURE {
+            -calculate_pressure_force(
+                particle.index,
+                connected_cells
+                    .get(particle.index * 9..(particle.index + 1) * 9)
+                    .unwrap(),
+                &particle_predicted_positions,
+                &grid,
+                densities,
+            )
+        } else {
+            Vec2::ZERO
+        };
+
         let interaction_force = match use_interaction {
             true => player_interation_physics::calculate_interavtion_force(
                 particle.predicted_position,
@@ -95,6 +113,9 @@ pub fn handle_particles_physics(
             false => Vec2::ZERO,
         };
 
+        let force = pressure_force * PRESSURE_FORCE_MODIFIER
+            - calc_drag_force(particle.velocity, particle.area)
+            + interaction_force;
     particles
         .par_iter_mut()
         .for_each(|(mut transform, mut particle)| {

@@ -1,10 +1,12 @@
-use std::usize;
-
-use bevy::math::{Vec2, vec2};
+use bevy::{
+    math::{Vec2, vec2},
+    prelude::*,
+};
 
 use crate::{
     bounding_box::BOX_BOUNDS_SIZE_PIXELS,
-    particles_spawning::{self, PARTICLE_RAY},
+    particle_physics::Particle,
+    particles_spawning::{self, PARTICLES_COUNT},
     pressure_handler::SMOOTHING_DISTANCE,
 };
 pub fn split_particles_into_grid(particles: &[Vec2]) -> [Vec<usize>; TOTAL_GRID_SIZE] {
@@ -92,4 +94,22 @@ pub fn get_connected_cells_indexes(sample_grid_pos: &Vec2) -> Vec<usize> {
         output.push(index);
     }
     output
+}
+pub fn calculate_connected_cells_for_every_particle(
+    particles: &Query<(&mut Transform, &mut Particle)>,
+) -> Vec<usize> {
+    // array of vectors for particles that can be indexed by particle index to aces connected cells
+    // so i don't have to calculate them multiple times
+    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_COUNT * 9) as usize);
+    // TODO: test if parallel could work
+    let mut i = 0;
+    particles.iter().for_each(|(transform, _)| {
+        let cells =
+            get_connected_cells_indexes(&pixel_pos_to_gird_pos(&transform.translation.xy()));
+        for cell in cells {
+            connected_cells.push(cell);
+        }
+        i += 1;
+    });
+    connected_cells
 }
