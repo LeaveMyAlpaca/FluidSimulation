@@ -11,8 +11,8 @@ mod player_interation_physics;
 #[path = "physics/pressure_handler.rs"]
 mod pressure_handler;
 mod ui_handler;
-
-use std::usize;
+#[path = "physics/viscosity_force.rs"]
+mod viscosity_force;
 
 use bevy::{
     color::palettes::css::{BLUE, GREEN, RED},

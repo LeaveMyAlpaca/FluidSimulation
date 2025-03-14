@@ -1,26 +1,22 @@
-use std::vec;
-
 use crate::{
-    collisions::resolve_colisions,
+    collisions::resolve_collisions,
     particle_grid,
     particles_spawning::{self, PARTICLES_COUNT},
+    player_interation_physics,
     pressure_handler::{self, calculate_pressure_force},
+    viscosity_force::calculate_viscosity_force,
 };
-use bevy::{math::*, prelude::*, transform};
+use bevy::{math::*, prelude::*, window::PrimaryWindow};
 
 // physics settings
 const GRAVITY: Vec2 = Vec2::new(0f32, -15f32);
 const TIME_SCALE: f32 = 2f32;
 const AIR_DENSITY: f32 = 1f32;
-const PARTICLE_DRAG_COEFICIENT: f32 = 0.01f32;
-const PRESSURE_FORCE_MODIFIER: f32 = 0.5f32;
+const PARTICLE_DRAG_COEFFICIENT: f32 = 0.01f32;
+const PRESSURE_FORCE_MODIFIER: f32 = 0.6f32;
 
 const DEBUG_USE_PRESSURE: bool = true;
-const DEBUG_RUN_PARTICLE_PHYSICS: bool = true;
-const DEBUG_SHOW_PARTICLE_DENSITY: bool = false;
-const DEBUG_SHOW_PARTICLE_PRESSURE: bool = false;
-const DEBUG_SHOW_DISTANCE_CHECK: bool = false;
-
+const RUN_PHYSICS: bool = true;
 pub fn handle_particles_physics(
     mut particles: Query<(&mut Transform, &mut Particle)>,
     time: Res<Time>,

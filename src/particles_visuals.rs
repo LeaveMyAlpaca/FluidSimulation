@@ -1,24 +1,15 @@
-use std::borrow::Borrow;
-
 use bevy::{
-    color::{
-        self,
-        palettes::css::{
-            BROWN, DARK_BLUE, GREEN, LIGHT_BLUE, LIGHT_CYAN, LIGHT_GREEN, ORANGE, RED, YELLOW,
-        },
-    },
-    gizmos,
+    color::palettes::css::{DARK_BLUE, LIGHT_GREEN},
     math::{VectorSpace, vec3},
     prelude::*,
     sprite::Sprite,
 };
 
-use crate::{particle_physics::Particle, particles_spawning::PARTICLE_RAY, pressure_handler};
+use crate::{particle_physics::Particle, particles_spawning::PARTICLE_RAY};
 const SHOW_PARTICLE_VISULAS: bool = true;
-pub fn update_particles_visuals(
-    mut particles: Query<(&mut Transform, &Particle, &mut Sprite)>,
-    mut gizmos: Gizmos,
-) {
+const SPEED_VISUALIZATION_SCALE: f32 = 80f32;
+
+pub fn update_particles_visuals(mut particles: Query<(&mut Transform, &Particle, &mut Sprite)>) {
     if !SHOW_PARTICLE_VISULAS {
         return;
     }
@@ -26,7 +17,7 @@ pub fn update_particles_visuals(
     particles
         .iter_mut()
         .for_each(|(mut transform, particle, mut sprite)| {
-            let t = particle.velocity.length() / 10f32;
+            let t = particle.velocity.length() / SPEED_VISUALIZATION_SCALE;
             sprite.color = Color::Srgba(Srgba::lerp(DARK_BLUE, LIGHT_GREEN, t));
 
             let scale = PARTICLE_RAY
