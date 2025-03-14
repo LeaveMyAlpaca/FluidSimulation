@@ -37,13 +37,13 @@ pub fn calculate_density_for_every_particle(
     connected_cells: &[usize],
 ) -> Vec<f32> {
     let input = vec![0f32; particles_spawning::PARTICLES_COUNT as usize];
-    let data_chuncks = input.par_splat_map(bevy::tasks::ComputeTaskPool::get(), None, |i, data| {
+    let data_chunks = input.par_splat_map(bevy::tasks::ComputeTaskPool::get(), None, |i, data| {
         // `i` is the starting index of the current chunk
-        let mut output_chunck = Vec::new();
+        let mut output_chunk = Vec::new();
 
         for internal_index in 0..data.len() {
             let real_particle_index = internal_index + i;
-            output_chunck.push(sample_density(
+            output_chunk.push(sample_density(
                 &particles_pos[real_particle_index],
                 connected_cells
                     .get(real_particle_index * 9..(real_particle_index + 1) * 9)
@@ -52,24 +52,24 @@ pub fn calculate_density_for_every_particle(
                 particles_pos,
             ));
         }
-        output_chunck
+        output_chunk
     });
     let mut output = Vec::with_capacity(PARTICLES_COUNT as usize);
-    for chunck in data_chuncks {
-        for density in chunck {
+    for chunk in data_chunks {
+        for density in chunk {
             output.push(density);
         }
     }
     output
 }
 pub fn calculate_pressure_force(
-    sample_particel_index: usize,
+    sample_particle_index: usize,
     sample_connected_cells: &[usize],
     particles_pos: &[Vec2],
     particle_grid: &[Vec<usize>; TOTAL_GRID_SIZE],
     densities: &[f32],
 ) -> Vec2 {
-    let sample_point = particles_pos[sample_particel_index];
+    let sample_point = particles_pos[sample_particle_index];
     let mut pressure: Vec2 = Vec2::ZERO;
     for cell in sample_connected_cells {
         if cell == &usize::MAX {
@@ -78,7 +78,7 @@ pub fn calculate_pressure_force(
         for particle_index_ref in &particle_grid[cell.to_owned()] {
             let particle_index = particle_index_ref.to_owned();
             let pos = particles_pos[particle_index];
-            if particle_index == sample_particel_index || sample_point == pos {
+            if particle_index == sample_particle_index || sample_point == pos {
                 continue;
             }
 
@@ -87,7 +87,7 @@ pub fn calculate_pressure_force(
             let slope = smoothing_kernel_derivative(dist);
             let shared_pressure = calculate_shared_pressure(
                 densities[particle_index],
-                densities[sample_particel_index],
+                densities[sample_particle_index],
             );
             pressure -=
                 shared_pressure * dir * slope * INFLUENCE_MODIFIER / densities[particle_index];

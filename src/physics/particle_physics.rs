@@ -2,7 +2,7 @@ use crate::{
     collisions::resolve_collisions,
     particle_grid,
     particles_spawning::{self, PARTICLES_COUNT},
-    player_interation_physics,
+    player_interaction_physics,
     pressure_handler::{self, calculate_pressure_force},
     viscosity_force::calculate_viscosity_force,
 };
@@ -100,7 +100,7 @@ pub fn handle_particles_physics(
         };
 
         let interaction_force = match use_interaction {
-            true => player_interation_physics::calculate_interavtion_force(
+            true => player_interaction_physics::calculate_interaction_force(
                 particle.predicted_position,
                 mouse_position,
                 force_sign,
@@ -187,6 +187,6 @@ impl Particle {
         }
     }
     fn calc_area(ray: f32) -> f32 {
-        core::f32::consts::PI * ray.squared() * particles_spawning::PARTICLE_RESOULTION
+        core::f32::consts::PI * ray.squared() * particles_spawning::PARTICLE_RESOLUTION
     }
 }

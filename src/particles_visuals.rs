@@ -6,11 +6,11 @@ use bevy::{
 };
 
 use crate::{particle_physics::Particle, particles_spawning::PARTICLE_RAY};
-const SHOW_PARTICLE_VISULAS: bool = true;
+const SHOW_PARTICLE_VISUALS: bool = true;
 const SPEED_VISUALIZATION_SCALE: f32 = 80f32;
 
 pub fn update_particles_visuals(mut particles: Query<(&mut Transform, &Particle, &mut Sprite)>) {
-    if !SHOW_PARTICLE_VISULAS {
+    if !SHOW_PARTICLE_VISUALS {
         return;
     }
 

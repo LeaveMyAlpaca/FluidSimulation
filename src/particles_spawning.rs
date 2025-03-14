@@ -4,7 +4,7 @@ use rand::{Rng, rngs::ThreadRng};
 
 const CIRCLE_SPRITE_PATH: &str = "sprites/circle.png";
 pub const PARTICLE_RAY: f32 = 0.05f32;
-pub const PARTICLE_RESOULTION: f32 = 50f32;
+pub const PARTICLE_RESOLUTION: f32 = 50f32;
 pub const STANDARD_PARTICLE_MASS: f32 = 2f32;
 
 pub fn handle_spawning_particles(commands: &mut Commands, asset_server: &Res<AssetServer>) {

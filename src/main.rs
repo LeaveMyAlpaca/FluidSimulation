@@ -6,8 +6,8 @@ mod particle_grid;
 mod particle_physics;
 mod particles_spawning;
 mod particles_visuals;
-#[path = "physics/player_interation_physics.rs"]
-mod player_interation_physics;
+#[path = "physics/player_interaction_physics.rs"]
+mod player_interaction_physics;
 #[path = "physics/pressure_handler.rs"]
 mod pressure_handler;
 mod ui_handler;

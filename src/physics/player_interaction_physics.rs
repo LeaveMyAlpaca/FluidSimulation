@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 const INTERACTION_STRENGTH: f32 = 90000000f32;
 const MAX_INTERACTION_DIST_SQRT: f32 = 900000f32;
-pub fn calculate_interavtion_force(
+pub fn calculate_interaction_force(
     pos: Vec2,
     mouse_pos: Vec2,
     force_sign: f32,
