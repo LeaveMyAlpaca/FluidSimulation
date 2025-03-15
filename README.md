@@ -7,5 +7,9 @@
  - Bevy's sprite rendering
  - Poor multi threading of algorithm
  - can't get this to run in release mode
+#Potential improvements
+ - profiling with tracey 
+ - rendering particles as meshes by hand
+
 # Vid
 coming soon tm.
