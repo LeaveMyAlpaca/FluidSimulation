@@ -1,6 +1,9 @@
+use std::usize;
+
 use bevy::{
     math::{Vec2, vec2},
     prelude::*,
+    tasks::ParallelSlice,
 };
 
 use crate::{
@@ -25,7 +28,6 @@ pub fn split_particles_into_grid(particles: &[Vec2]) -> [Vec<usize>; TOTAL_GRID_
 
     output
 }
-//OK: (890 / 20 , 500 /20)  + (100 /2 ,  50 / 2) -> (95 , 50)
 pub fn pixel_pos_to_gird_pos(pixel_pos: &Vec2) -> Vec2 {
     let raw = pixel_pos / SMOOTHING_DISTANCE as f32 + vec2(GRID_SIZE_X / 2f32, GRID_SIZE_Y / 2f32);
     vec2((raw.x as usize) as f32, (raw.y as usize) as f32)
@@ -33,9 +35,7 @@ pub fn pixel_pos_to_gird_pos(pixel_pos: &Vec2) -> Vec2 {
 pub fn pos_to_grid_index(pixel_pos: &Vec2) -> usize {
     grid_pos_to_index(&pixel_pos_to_gird_pos(pixel_pos))
 }
-// 2000 / 20 -> 100
 pub const GRID_SIZE_X: f32 = (BOX_BOUNDS_SIZE_PIXELS.x as u32).div_ceil(SMOOTHING_DISTANCE) as f32;
-// 50
 pub const GRID_SIZE_Y: f32 = (BOX_BOUNDS_SIZE_PIXELS.y as u32).div_ceil(SMOOTHING_DISTANCE) as f32;
 pub const TOTAL_GRID_SIZE: usize = (GRID_SIZE_X as usize) * (GRID_SIZE_Y as usize + 1) + 1;
 

@@ -19,10 +19,8 @@ use bevy::{
     math::vec2,
     prelude::*,
 };
-use bounding_box::BOX_BOUNDS_SIZE_PIXELS;
-use particle_grid::{GRID_SIZE_X, GRID_SIZE_Y, TOTAL_GRID_SIZE, pos_to_grid_index};
+use particle_grid::{GRID_SIZE_X, GRID_SIZE_Y};
 use particle_physics::Particle;
-use particles_spawning::PARTICLE_RAY;
 use pressure_handler::SMOOTHING_DISTANCE;
 
 fn main() {
