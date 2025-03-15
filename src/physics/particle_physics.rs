@@ -36,12 +36,15 @@ pub fn handle_particles_physics(
             particle.predicted_position = transform.translation.xy() + particle.velocity / 120f32;
         });
 
-    let connected_cells = particle_grid::calculate_connected_cells_for_every_particle(&particles);
     let mut particle_predicted_positions =
         Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
     for (_, particle) in &particles {
         particle_predicted_positions.push(particle.predicted_position);
     }
+
+    let connected_cells =
+        particle_grid::calculate_connected_cells_for_every_particle(&particle_predicted_positions);
+
     let grid = particle_grid::split_particles_into_grid(&particle_predicted_positions);
 
     let densities = &pressure_handler::calculate_density_for_every_particle(
