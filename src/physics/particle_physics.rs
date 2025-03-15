@@ -13,7 +13,7 @@ const GRAVITY: Vec2 = Vec2::new(0f32, -15f32);
 const TIME_SCALE: f32 = 2f32;
 const AIR_DENSITY: f32 = 1f32;
 const PARTICLE_DRAG_COEFFICIENT: f32 = 0.01f32;
-const PRESSURE_FORCE_MODIFIER: f32 = 0.6f32;
+const PRESSURE_FORCE_MODIFIER: f32 = 0.25f32;
 
 const DEBUG_USE_PRESSURE: bool = true;
 const RUN_PHYSICS: bool = true;
