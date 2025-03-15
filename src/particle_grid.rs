@@ -96,21 +96,26 @@ pub fn get_connected_cells_indexes(sample_grid_pos: &Vec2) -> Vec<usize> {
     }
     output
 }
-pub fn calculate_connected_cells_for_every_particle(
-    particles: &Query<(&mut Transform, &mut Particle)>,
-) -> Vec<usize> {
+pub fn calculate_connected_cells_for_every_particle(particle_positions: &[Vec2]) -> Vec<usize> {
     // array of vectors for particles that can be indexed by particle index to aces connected cells
     // so i don't have to calculate them multiple times
-    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_COUNT * 9) as usize);
     // TODO: test if parallel could work
-    let mut i = 0;
-    particles.iter().for_each(|(transform, _)| {
-        let cells =
-            get_connected_cells_indexes(&pixel_pos_to_gird_pos(&transform.translation.xy()));
-        for cell in cells {
-            connected_cells.push(cell);
-        }
-        i += 1;
-    });
+    let data_chunks =
+        particle_positions.par_splat_map(bevy::tasks::ComputeTaskPool::get(), None, |_, data| {
+            let mut output_chunk = Vec::new();
+
+            for sample_point in data {
+                output_chunk.append(&mut get_connected_cells_indexes(&pixel_pos_to_gird_pos(
+                    sample_point,
+                )));
+            }
+            output_chunk
+        });
+
+    let mut connected_cells: Vec<usize> = Vec::with_capacity((PARTICLES_COUNT * 9) as usize);
+    for mut data in data_chunks {
+        connected_cells.append(&mut data);
+    }
+
     connected_cells
 }
