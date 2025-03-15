@@ -17,7 +17,7 @@ pub fn calculate_viscosity_force(
 ) -> Vec2 {
     let mut viscosity_force = Vec2::ZERO;
     for cell in connected_cells {
-        if cell == &usize::MAX {
+        if cell == &usize::MAX || cell > &TOTAL_GRID_SIZE {
             continue;
         }
         for index_ref in &particles_gird[cell.to_owned()] {

@@ -72,7 +72,7 @@ pub fn calculate_pressure_force(
     let sample_point = particles_pos[sample_particle_index];
     let mut pressure: Vec2 = Vec2::ZERO;
     for cell in sample_connected_cells {
-        if cell == &usize::MAX {
+        if cell == &usize::MAX || cell > &TOTAL_GRID_SIZE {
             continue;
         }
         for particle_index_ref in &particle_grid[cell.to_owned()] {
