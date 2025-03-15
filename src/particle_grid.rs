@@ -1,4 +1,4 @@
-use std::usize;
+use std::{usize, vec};
 
 use bevy::{
     math::{Vec2, vec2},
@@ -12,9 +12,9 @@ use crate::{
     particles_spawning::{self, PARTICLES_COUNT},
     pressure_handler::SMOOTHING_DISTANCE,
 };
-pub fn split_particles_into_grid(particles: &[Vec2]) -> [Vec<usize>; TOTAL_GRID_SIZE] {
+pub fn split_particles_into_grid(particles: &[Vec2]) -> Vec<Vec<usize>> {
     // maybe change to 1d vec???
-    let mut output: [Vec<usize>; TOTAL_GRID_SIZE] = [const { Vec::new() }; TOTAL_GRID_SIZE];
+    let mut output: Vec<Vec<usize>> = vec![Vec::new(); TOTAL_GRID_SIZE];
 
     // this parallel?
     for i in 0..particles_spawning::PARTICLES_COUNT as usize {

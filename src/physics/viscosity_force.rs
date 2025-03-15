@@ -12,7 +12,7 @@ pub fn calculate_viscosity_force(
     sample_velocity: Vec2,
     particles_pos: &[Vec2],
     connected_cells: &[usize],
-    particles_gird: &[Vec<usize>; TOTAL_GRID_SIZE],
+    particles_gird: &[Vec<usize>],
     velocities: &[Vec2],
 ) -> Vec2 {
     let mut viscosity_force = Vec2::ZERO;

@@ -32,7 +32,7 @@ fn smoothing_kernel(distance: f32) -> f32 {
 }
 
 pub fn calculate_density_for_every_particle(
-    particles_gird: &[Vec<usize>; TOTAL_GRID_SIZE],
+    particles_gird: &[Vec<usize>],
     particles_pos: &[Vec2],
     connected_cells: &[usize],
 ) -> Vec<f32> {
@@ -66,7 +66,7 @@ pub fn calculate_pressure_force(
     sample_particle_index: usize,
     sample_connected_cells: &[usize],
     particles_pos: &[Vec2],
-    particle_grid: &[Vec<usize>; TOTAL_GRID_SIZE],
+    particle_grid: &[Vec<usize>],
     densities: &[f32],
 ) -> Vec2 {
     let sample_point = particles_pos[sample_particle_index];
@@ -116,7 +116,7 @@ const INFLUENCE_MODIFIER: f32 = 10f32;
 pub fn sample_density(
     sample_particle_pos: &Vec2,
     sample_connected_cells: &[usize],
-    particle_grid: &[Vec<usize>; TOTAL_GRID_SIZE],
+    particle_grid: &[Vec<usize>],
     particles: &[Vec2],
 ) -> f32 {
     let mut density: f32 = 0f32;
