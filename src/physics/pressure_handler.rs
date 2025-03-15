@@ -111,7 +111,7 @@ fn get_influence(a: &Vec2, b: &Vec2) -> f32 {
     smoothing_kernel(a.distance(b.xy()))
 }
 
-pub const SMOOTHING_DISTANCE: u32 = 15;
+pub const SMOOTHING_DISTANCE: u32 = 12;
 const INFLUENCE_MODIFIER: f32 = 10f32;
 pub fn sample_density(
     sample_particle_pos: &Vec2,

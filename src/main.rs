@@ -16,8 +16,11 @@ mod viscosity_force;
 
 use bevy::{
     color::palettes::css::{BLUE, GREEN, RED},
+    core::TaskPoolThreadAssignmentPolicy,
     math::vec2,
     prelude::*,
+    render::pipelined_rendering::PipelinedRenderingPlugin,
+    tasks::available_parallelism,
 };
 use particle_grid::{GRID_SIZE_X, GRID_SIZE_Y};
 use particle_physics::Particle;
@@ -25,7 +28,19 @@ use pressure_handler::SMOOTHING_DISTANCE;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(TaskPoolPlugin {
+            task_pool_options: TaskPoolOptions {
+                compute: TaskPoolThreadAssignmentPolicy {
+                    // set the minimum # of compute threads
+                    // to the total number of available threads
+                    min_threads: available_parallelism(),
+                    max_threads: usize::MAX, // unlimited max threads
+                    percent: 1.0,            // this value is irrelevant in this case
+                },
+                // keep the defaults for everything else
+                ..default()
+            },
+        }))
         .add_systems(Startup, (setup, bounding_box::spawn_bounding_box))
         .add_systems(
             Update,

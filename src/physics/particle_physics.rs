@@ -17,6 +17,7 @@ const PRESSURE_FORCE_MODIFIER: f32 = 0.25f32;
 
 const DEBUG_USE_PRESSURE: bool = true;
 const RUN_PHYSICS: bool = true;
+const UPDATES_PER_FRAME: u32 = 3;
 pub fn handle_particles_physics(
     mut particles: Query<(&mut Transform, &mut Particle)>,
     time: Res<Time>,
@@ -27,135 +28,140 @@ pub fn handle_particles_physics(
     if !RUN_PHYSICS {
         return;
     }
-    let delta = time.delta().as_secs_f32() * TIME_SCALE;
-    particles
-        .par_iter_mut()
-        .for_each(|(transform, mut particle)| {
-            let a = GRAVITY;
-            particle.velocity += a * delta;
-            particle.predicted_position = transform.translation.xy() + particle.velocity / 120f32;
-        });
 
-    let mut particle_predicted_positions =
-        Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
-    for (_, particle) in &particles {
-        particle_predicted_positions.push(particle.predicted_position);
-    }
+    let delta = time.delta().as_secs_f32() * TIME_SCALE / UPDATES_PER_FRAME as f32;
+    for _ in 0..UPDATES_PER_FRAME {
+        particles
+            .par_iter_mut()
+            .for_each(|(transform, mut particle)| {
+                let a = GRAVITY;
+                particle.velocity += a * delta;
+                particle.predicted_position =
+                    transform.translation.xy() + particle.velocity / 120f32;
+            });
 
-    let connected_cells =
-        particle_grid::calculate_connected_cells_for_every_particle(&particle_predicted_positions);
-
-    let grid = particle_grid::split_particles_into_grid(&particle_predicted_positions);
-
-    let densities = &pressure_handler::calculate_density_for_every_particle(
-        &grid,
-        &particle_predicted_positions,
-        &connected_cells,
-    );
-
-    // interactions
-    let mut use_interaction: bool = true;
-    // get the camera info and transform
-    // assuming there is exactly one main camera entity, so Query::single() is OK
-    let (camera, camera_transform) = q_camera.single();
-
-    // There is only one primary window, so we can similarly get it from the query:
-    let window = q_window.single();
-
-    // check if the cursor is inside the window and get its position
-    // then, ask bevy to convert into world coordinates, and truncate to discard Z
-    let cursor_option = window.cursor_position();
-    let mouse_position = match cursor_option {
-        Some(pos) => camera
-            .viewport_to_world(camera_transform, pos)
-            .map(|ray| ray.origin.truncate())
-            .unwrap(),
-        None => {
-            use_interaction = false;
-            Vec2::ZERO
+        let mut particle_predicted_positions =
+            Vec::with_capacity(particles_spawning::PARTICLES_COUNT as usize);
+        for (_, particle) in &particles {
+            particle_predicted_positions.push(particle.predicted_position);
         }
-    };
-    let force_sign;
-    if mouse_buttons.pressed(MouseButton::Right) {
-        force_sign = -1f32;
-    } else if mouse_buttons.pressed(MouseButton::Left) {
-        // disabled because not working good enough
-        use_interaction = false;
-        force_sign = 0.5f32;
-    } else {
-        use_interaction = false;
-        force_sign = 0f32;
-    };
 
-    particles.par_iter_mut().for_each(|(_, mut particle)| {
-        let pressure_force: Vec2 = if DEBUG_USE_PRESSURE {
-            -calculate_pressure_force(
-                particle.index,
-                connected_cells
-                    .get(particle.index * 9..(particle.index + 1) * 9)
-                    .unwrap(),
-                &particle_predicted_positions,
-                &grid,
-                densities,
-            )
-        } else {
-            Vec2::ZERO
-        };
-
-        let interaction_force = match use_interaction {
-            true => player_interaction_physics::calculate_interaction_force(
-                particle.predicted_position,
-                mouse_position,
-                force_sign,
-                particle.velocity,
-            ),
-            false => Vec2::ZERO,
-        };
-
-        let force = pressure_force * PRESSURE_FORCE_MODIFIER
-            - calc_drag_force(particle.velocity, particle.area)
-            + interaction_force;
-        let acceleration = force / particle.mass;
-        particle.velocity += acceleration * delta;
-    });
-    let mut velocities: Vec<Vec2> = Vec::with_capacity(PARTICLES_COUNT as usize);
-    // get velocities for viscosity
-    particles.iter().for_each(|(_, particle)| {
-        velocities.push(particle.velocity);
-    });
-
-    // apply viscosity
-    particles.par_iter_mut().for_each(|(_, mut particle)| {
-        let viscosity = calculate_viscosity_force(
-            particle.predicted_position,
-            particle.velocity,
+        let connected_cells = particle_grid::calculate_connected_cells_for_every_particle(
             &particle_predicted_positions,
-            // could add that as a separate property to particle so i don't have to get it twice
-            // but that's a pretty cheap operation
-            connected_cells
-                .get(&particle.index * 9..(&particle.index + 1) * 9)
-                .unwrap(),
-            &grid,
-            &velocities,
         );
-        particle.velocity += viscosity;
-    });
 
-    particles
-        .par_iter_mut()
-        .for_each(|(mut transform, mut particle)| {
-            if particle.velocity.is_nan() {
-                particle.velocity = particle.last_velocity;
+        let grid = particle_grid::split_particles_into_grid(&particle_predicted_positions);
+
+        let densities = &pressure_handler::calculate_density_for_every_particle(
+            &grid,
+            &particle_predicted_positions,
+            &connected_cells,
+        );
+
+        // interactions
+        let mut use_interaction: bool = true;
+        // get the camera info and transform
+        // assuming there is exactly one main camera entity, so Query::single() is OK
+        let (camera, camera_transform) = q_camera.single();
+
+        // There is only one primary window, so we can similarly get it from the query:
+        let window = q_window.single();
+
+        // check if the cursor is inside the window and get its position
+        // then, ask bevy to convert into world coordinates, and truncate to discard Z
+        let cursor_option = window.cursor_position();
+        let mouse_position = match cursor_option {
+            Some(pos) => camera
+                .viewport_to_world(camera_transform, pos)
+                .map(|ray| ray.origin.truncate())
+                .unwrap(),
+            None => {
+                use_interaction = false;
+                Vec2::ZERO
             }
-            particle.last_velocity = particle.velocity;
+        };
+        let force_sign;
+        if mouse_buttons.pressed(MouseButton::Right) {
+            force_sign = -1f32;
+        } else if mouse_buttons.pressed(MouseButton::Left) {
+            // disabled because not working good enough
+            use_interaction = false;
+            force_sign = 0.5f32;
+        } else {
+            use_interaction = false;
+            force_sign = 0f32;
+        };
 
-            let s = particle.velocity * delta;
+        particles.par_iter_mut().for_each(|(_, mut particle)| {
+            let pressure_force: Vec2 = if DEBUG_USE_PRESSURE {
+                -calculate_pressure_force(
+                    particle.index,
+                    connected_cells
+                        .get(particle.index * 9..(particle.index + 1) * 9)
+                        .unwrap(),
+                    &particle_predicted_positions,
+                    &grid,
+                    densities,
+                )
+            } else {
+                Vec2::ZERO
+            };
 
-            transform.translation += vec3(s.x, s.y, 0f32);
-            resolve_collisions(&mut particle, &mut transform);
-            // just for visualization purposes
-            particle.density = densities[particle.index];
+            let interaction_force = match use_interaction {
+                true => player_interaction_physics::calculate_interaction_force(
+                    particle.predicted_position,
+                    mouse_position,
+                    force_sign,
+                    particle.velocity,
+                ),
+                false => Vec2::ZERO,
+            };
+
+            let force = pressure_force * PRESSURE_FORCE_MODIFIER
+                - calc_drag_force(particle.velocity, particle.area)
+                + interaction_force;
+            let acceleration = force / particle.mass;
+            particle.velocity += acceleration * delta;
         });
+        let mut velocities: Vec<Vec2> = Vec::with_capacity(PARTICLES_COUNT as usize);
+        // get velocities for viscosity
+        particles.iter().for_each(|(_, particle)| {
+            velocities.push(particle.velocity);
+        });
+
+        // apply viscosity
+        particles.par_iter_mut().for_each(|(_, mut particle)| {
+            let viscosity = calculate_viscosity_force(
+                particle.predicted_position,
+                particle.velocity,
+                &particle_predicted_positions,
+                // could add that as a separate property to particle so i don't have to get it twice
+                // but that's a pretty cheap operation
+                connected_cells
+                    .get(&particle.index * 9..(&particle.index + 1) * 9)
+                    .unwrap(),
+                &grid,
+                &velocities,
+            );
+            particle.velocity += viscosity;
+        });
+
+        particles
+            .par_iter_mut()
+            .for_each(|(mut transform, mut particle)| {
+                if particle.velocity.is_nan() {
+                    particle.velocity = particle.last_velocity;
+                }
+                particle.last_velocity = particle.velocity;
+
+                let s = particle.velocity * delta;
+
+                transform.translation += vec3(s.x, s.y, 0f32);
+                resolve_collisions(&mut particle, &mut transform);
+                // just for visualization purposes
+                particle.density = densities[particle.index];
+            });
+    }
 }
 
 fn calc_drag_force(velocity: Vec2, area: f32) -> Vec2 {
