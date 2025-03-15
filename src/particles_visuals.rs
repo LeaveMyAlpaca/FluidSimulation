@@ -15,7 +15,7 @@ pub fn update_particles_visuals(mut particles: Query<(&mut Transform, &Particle,
     }
 
     particles
-        .iter_mut()
+        .par_iter_mut()
         .for_each(|(mut transform, particle, mut sprite)| {
             let t = particle.velocity.length() / SPEED_VISUALIZATION_SCALE;
             sprite.color = Color::Srgba(Srgba::lerp(DARK_BLUE, LIGHT_GREEN, t));
