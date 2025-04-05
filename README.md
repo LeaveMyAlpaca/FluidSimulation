@@ -1,4 +1,6 @@
 # FluidSimulation
+## Video https://www.youtube.com/watch?v=QOP5tywBQ6o
+
  Fluid simulation written in rust using bevy game engine.
  - I based it of https://www.youtube.com/watch?v=rSKMYc1CQHE
  - It can run with 100k particles at 15 fps with 3 physics updates per frame so about 45 updates per second ( in debug mode)
