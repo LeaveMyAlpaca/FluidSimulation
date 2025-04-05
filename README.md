@@ -12,6 +12,3 @@
 #Potential improvements
  - profiling with tracey 
  - rendering particles as meshes by hand
-
-# Vid
-coming soon tm.
